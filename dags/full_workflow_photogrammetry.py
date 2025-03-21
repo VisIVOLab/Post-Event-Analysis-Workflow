@@ -5,7 +5,7 @@ import subprocess
 import os
 
 def load_images(image_folder, **kwargs):
-    files = [f for f in os.listdir(image_folder) if f.endswith(('jpg', 'jpeg', 'tif', 'tiff'))]
+    files = [f for f in os.listdir(image_folder) if f.endswith(('JPG','jpg', 'jpeg', 'tif', 'tiff'))]
     print(f"Found {len(files)} images in {image_folder}")
     return files
 
@@ -26,7 +26,7 @@ default_args = {
 }
 
 dag = DAG(
-    dag_id='test_full_metashape_processing',
+    dag_id='test_full_metashape_processing_V3',
     default_args=default_args,
     description='DAG per il processo fotogrammetrico con Metashape',
     schedule_interval=None,  # Esegui manualmente o imposta un orario
