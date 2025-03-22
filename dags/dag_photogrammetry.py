@@ -148,7 +148,7 @@ default_args = {
 }
 
 dag = DAG(
-    dag_id='dag_photogrammetry_v4',
+    dag_id='dag_photogrammetry_v5',
     default_args=default_args,
     schedule_interval=None,  # Avvio manuale per ora
     catchup=False # Airflow ignorerà le date mancanti ed eseguirà solo la prossima esecuzione pianificata
@@ -159,51 +159,74 @@ dag = DAG(
 task_new_project = PythonOperator(
     task_id='new_project',
     python_callable=new_project,
-    op_kwargs={'output_folder': '/home/leonardo/AirflowDemo/metashape_output'},
     dag=dag
 )
 
 task_import_photos = PythonOperator(
     task_id='import_photos',
     python_callable=import_photos,
-    op_kwargs={'image_folder': '/home/leonardo/AirflowDemo/metashape_input', 'output_folder': '/home/leonardo/AirflowDemo/metashape_output'},
+    op_kwargs={'image_folder': '/home/leonardo/AirflowDemo/metashape_input'},
     dag=dag
 )
 
-""" t2 = PythonOperator(
-    task_id='align_cameras',
-    python_callable=align_cameras,
-    op_kwargs={'output_folder': '/path/to/output'},
+task_match_and_align = PythonOperator(
+    task_id='match_and_align',
+    python_callable=match_and_align,
+    op_kwargs={'image_folder': '/home/leonardo/AirflowDemo/metashape_input'},
     dag=dag
 )
 
-t3 = PythonOperator(
+task_build_depth_maps = PythonOperator(
+    task_id='build_depth_maps',
+    python_callable=build_depth_maps,
+    dag=dag
+)
+
+task_build_point_cloud = PythonOperator(
     task_id='build_point_cloud',
     python_callable=build_point_cloud,
-    op_kwargs={'output_folder': '/path/to/output'},
     dag=dag
 )
 
-t4 = PythonOperator(
-    task_id='build_mesh',
-    python_callable=build_mesh,
-    op_kwargs={'output_folder': '/path/to/output'},
+task_build_model = PythonOperator(
+    task_id='build_model',
+    python_callable=build_model,
     dag=dag
 )
 
-t5 = PythonOperator(
-    task_id='build_texture',
-    python_callable=build_texture,
-    op_kwargs={'output_folder': '/path/to/output'},
+task_build_tiled = PythonOperator(
+    task_id='build_tiled',
+    python_callable=build_tiled,
     dag=dag
 )
 
-t6 = PythonOperator(
-    task_id='export_results',
-    python_callable=export_results,
-    op_kwargs={'output_folder': '/path/to/output'},
+task_export_cloud = PythonOperator(
+    task_id='export_cloud',
+    python_callable=export_cloud,
     dag=dag
-) """
+)
+
+task_export_model = PythonOperator(
+    task_id='export_model',
+    python_callable=export_model,
+    dag=dag
+)
+
+task_export_tiled = PythonOperator(
+    task_id='export_tiled',
+    python_callable=export_tiled,
+    dag=dag
+)
 
 # Definizione delle dipendenze
-task_new_project #>> task_import_photos #>> t3 >> t4 >> t5 >> t6
+task_new_project >> task_import_photos >> task_match_and_align >> task_build_depth_maps >> task_build_point_cloud >> [task_build_tiled, task_export_cloud, task_build_model]
+task_build_model >> task_export_model
+task_build_tiled >> task_export_tiled
+
+# oppure mettere tutte dipendenze sulla depth_map
+"""
+task_new_project >> task_import_photos >> task_match_and_align >> task_build_depth_maps >> [task_build_cloud, task_build_tiled, task_build_model]
+task_build_cloud >> task_export_cloud
+task_build_model >> task_export_model
+task_build_tiled >> task_export_tiled
+"""
