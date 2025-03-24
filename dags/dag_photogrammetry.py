@@ -9,7 +9,7 @@ from task.build_texture import build_texture
 from task.export_results import export_results """
 
 # Imposta la cartella di output per salvare il progetto
-OUTPUT_FOLDER = "/path/"
+OUTPUT_FOLDER = "/home/leonardo/AirflowDemo/metashape_output"
 PROJECT_PATH = os.path.join(OUTPUT_FOLDER, "project.psx")
 
 def new_project():
@@ -37,9 +37,8 @@ def import_photos(image_folder):
     print("Import Photos")
     photos = [entry.path for entry in os.scandir(image_folder) if entry.is_file() and entry.name.lower().endswith(('.jpg', '.jpeg', '.tif', '.tiff'))]
     
-    doc = Metashape.app.document
-    # project_path = os.path.join(output_folder, "project.psx")
-    doc.open(PROJECT_PATH)
+    doc = Metashape.Document()
+    doc.open(path=PROJECT_PATH, read_only=False)
     chunk = doc.addChunk()  # Aggiunge un nuovo chunk al progetto
     chunk.addPhotos(photos)
     doc.save(version="import_photos")
@@ -53,7 +52,7 @@ def match_and_align():
     
     print("Match and Align Cameras")
     """Matching e allineamento delle immagini"""
-    doc = Metashape.app.document
+    doc = Metashape.Document()
     # project_path = os.path.join(output_folder, "project.psx")
     doc.open(PROJECT_PATH)
     chunk = doc.chunks[0]
@@ -69,7 +68,7 @@ def build_depth_maps():
     import Metashape
 
     """Costruzione Depth Maps"""
-    doc = Metashape.app.document
+    doc = Metashape.Document()
     doc.open(PROJECT_PATH)  # Carica il progetto
     chunk = doc.chunks[0]
 
@@ -80,7 +79,7 @@ def build_point_cloud():
     import Metashape
 
     """Costruzione Point Cloud"""
-    doc = Metashape.app.document
+    doc = Metashape.Document()
     doc.open(PROJECT_PATH)  # Carica il progetto
     chunk = doc.chunks[0]
 
@@ -91,7 +90,7 @@ def build_model():
     import Metashape
 
     """Costruzione Modello 3D"""
-    doc = Metashape.app.document
+    doc = Metashape.Document()
     doc.open(PROJECT_PATH)
     chunk = doc.chunks[0]
 
@@ -102,7 +101,7 @@ def build_tiled():
     import Metashape
 
     """Costruzione Modello tiled"""
-    doc = Metashape.app.document
+    doc = Metashape.Document()
     doc.open(PROJECT_PATH)
     chunk = doc.chunks[0]
 
@@ -112,7 +111,7 @@ def build_tiled():
 def export_cloud():
     import Metashape
 
-    doc = Metashape.app.document
+    doc = Metashape.Document()
     doc.open(PROJECT_PATH)
     chunk = doc.chunks[0]
 
@@ -122,7 +121,7 @@ def export_cloud():
 def export_model():
     import Metashape
     
-    doc = Metashape.app.document
+    doc = Metashape.Document()
     doc.open(PROJECT_PATH)
     chunk = doc.chunks[0]
 
@@ -132,7 +131,7 @@ def export_model():
 def export_tiled():
     import Metashape
     
-    doc = Metashape.app.document
+    doc = Metashape.Document()
     doc.open(PROJECT_PATH)
     chunk = doc.chunks[0]
     chunk.exportTiledModel(os.path.join(OUTPUT_FOLDER, 'tile.zip'))
@@ -148,7 +147,7 @@ default_args = {
 }
 
 dag = DAG(
-    dag_id='dag_photogrammetry_v5',
+    dag_id='dag_photogrammetry_v7',
     default_args=default_args,
     schedule_interval=None,  # Avvio manuale per ora
     catchup=False # Airflow ignorerà le date mancanti ed eseguirà solo la prossima esecuzione pianificata
@@ -169,7 +168,7 @@ task_import_photos = PythonOperator(
     dag=dag
 )
 
-task_match_and_align = PythonOperator(
+"""task_match_and_align = PythonOperator(
     task_id='match_and_align',
     python_callable=match_and_align,
     op_kwargs={'image_folder': '/home/leonardo/AirflowDemo/metashape_input'},
@@ -217,11 +216,11 @@ task_export_tiled = PythonOperator(
     python_callable=export_tiled,
     dag=dag
 )
-
+"""
 # Definizione delle dipendenze
-task_new_project >> task_import_photos >> task_match_and_align >> task_build_depth_maps >> task_build_point_cloud >> [task_build_tiled, task_export_cloud, task_build_model]
-task_build_model >> task_export_model
-task_build_tiled >> task_export_tiled
+task_new_project >> task_import_photos #>> task_match_and_align >> task_build_depth_maps >> task_build_point_cloud >> [task_build_tiled, task_export_cloud, task_build_model]
+#task_build_model >> task_export_model
+#task_build_tiled >> task_export_tiled
 
 # oppure mettere tutte dipendenze sulla depth_map
 """
