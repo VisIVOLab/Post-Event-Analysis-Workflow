@@ -53,15 +53,12 @@ def match_and_align():
     print("Match and Align Cameras")
     """Matching e allineamento delle immagini"""
     doc = Metashape.Document()
-    # project_path = os.path.join(output_folder, "project.psx")
-    doc.open(PROJECT_PATH)
+    doc.open(path=PROJECT_PATH, read_only=False)
     chunk = doc.chunks[0]
 
     chunk.matchPhotos(downscale=2, downscale_3d=4, generic_preselection= True, keypoint_limit=40000, tiepoint_limit=10000)
     chunk.alignCameras()
     doc.save(version="match_and_align")
-    
-    print(f"{len(chunk.cameras)} images loaded.")
     logging.info(f"🚀 Matched photos.")
 
 def build_depth_maps():
@@ -69,7 +66,7 @@ def build_depth_maps():
 
     """Costruzione Depth Maps"""
     doc = Metashape.Document()
-    doc.open(PROJECT_PATH)  # Carica il progetto
+    doc.open(path=PROJECT_PATH, read_only=False)
     chunk = doc.chunks[0]
 
     chunk.buildDepthMaps(downscale=4, filter_mode=Metashape.MildFiltering)
@@ -80,7 +77,7 @@ def build_point_cloud():
 
     """Costruzione Point Cloud"""
     doc = Metashape.Document()
-    doc.open(PROJECT_PATH)  # Carica il progetto
+    doc.open(path=PROJECT_PATH, read_only=False)
     chunk = doc.chunks[0]
 
     chunk.buildPointCloud(source_data=Metashape.DataSource.DepthMapsData)    
@@ -91,7 +88,7 @@ def build_model():
 
     """Costruzione Modello 3D"""
     doc = Metashape.Document()
-    doc.open(PROJECT_PATH)
+    doc.open(path=PROJECT_PATH, read_only=False)
     chunk = doc.chunks[0]
 
     chunk.buildModel(surface_type=Metashape.SurfaceType.Arbitrary, interpolation=Metashape.Interpolation.EnabledInterpolation, face_count=Metashape.FaceCount.MediumFaceCount, source_data=Metashape.DataSource.PointCloudData)
@@ -102,7 +99,7 @@ def build_tiled():
 
     """Costruzione Modello tiled"""
     doc = Metashape.Document()
-    doc.open(PROJECT_PATH)
+    doc.open(path=PROJECT_PATH, read_only=False)
     chunk = doc.chunks[0]
 
     chunk.buildTiledModel(source_data=Metashape.DataSource.PointCloudData)
@@ -112,7 +109,7 @@ def export_cloud():
     import Metashape
 
     doc = Metashape.Document()
-    doc.open(PROJECT_PATH)
+    doc.open(path=PROJECT_PATH, read_only=False)
     chunk = doc.chunks[0]
 
     chunk.exportPointCloud(os.path.join(OUTPUT_FOLDER, 'point_cloud.las'))
@@ -122,7 +119,7 @@ def export_model():
     import Metashape
     
     doc = Metashape.Document()
-    doc.open(PROJECT_PATH)
+    doc.open(path=PROJECT_PATH, read_only=False)
     chunk = doc.chunks[0]
 
     chunk.exportModel(os.path.join(OUTPUT_FOLDER, 'model.obj'))
@@ -132,11 +129,10 @@ def export_tiled():
     import Metashape
     
     doc = Metashape.Document()
-    doc.open(PROJECT_PATH)
+    doc.open(path=PROJECT_PATH, read_only=False)
     chunk = doc.chunks[0]
     chunk.exportTiledModel(os.path.join(OUTPUT_FOLDER, 'tile.zip'))
     print("Esportazione completata!")
-
 
 # Definizione degli argomenti di default
 default_args = {
@@ -147,7 +143,7 @@ default_args = {
 }
 
 dag = DAG(
-    dag_id='dag_photogrammetry_v7',
+    dag_id='dag_photogrammetry_v13',
     default_args=default_args,
     schedule_interval=None,  # Avvio manuale per ora
     catchup=False # Airflow ignorerà le date mancanti ed eseguirà solo la prossima esecuzione pianificata
@@ -168,10 +164,9 @@ task_import_photos = PythonOperator(
     dag=dag
 )
 
-"""task_match_and_align = PythonOperator(
+task_match_and_align = PythonOperator(
     task_id='match_and_align',
     python_callable=match_and_align,
-    op_kwargs={'image_folder': '/home/leonardo/AirflowDemo/metashape_input'},
     dag=dag
 )
 
@@ -216,11 +211,11 @@ task_export_tiled = PythonOperator(
     python_callable=export_tiled,
     dag=dag
 )
-"""
+
 # Definizione delle dipendenze
-task_new_project >> task_import_photos #>> task_match_and_align >> task_build_depth_maps >> task_build_point_cloud >> [task_build_tiled, task_export_cloud, task_build_model]
-#task_build_model >> task_export_model
-#task_build_tiled >> task_export_tiled
+task_new_project >> task_import_photos >> task_match_and_align >> task_build_depth_maps >> task_build_point_cloud >> [task_export_cloud, task_build_model, task_build_tiled]
+task_build_model >> task_export_model
+task_build_tiled >> task_export_tiled
 
 # oppure mettere tutte dipendenze sulla depth_map
 """
