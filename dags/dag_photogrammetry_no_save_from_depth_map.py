@@ -72,9 +72,9 @@ def build_point_cloud():
 
     """Costruzione Point Cloud"""
     doc = Metashape.Document()
-    doc.open(path=PROJECT_PATH, read_only=True)
+    doc.open(path=PROJECT_PATH, read_only=False)
     chunk = doc.chunks[0]
-
+    print("Sto pointando")
     chunk.buildPointCloud(source_data=Metashape.DataSource.DepthMapsData)    
     # doc.save(version="build_point_cloud")
     chunk.exportPointCloud(os.path.join(OUTPUT_FOLDER, 'point_cloud.las'))
@@ -84,8 +84,9 @@ def build_model():
 
     """Costruzione Modello 3D"""
     doc = Metashape.Document()
-    doc.open(path=PROJECT_PATH, read_only=True)
+    doc.open(path=PROJECT_PATH, read_only=False)
     chunk = doc.chunks[0]
+    print("sto modellando")
     chunk.buildModel(surface_type=Metashape.SurfaceType.Arbitrary, interpolation=Metashape.Interpolation.EnabledInterpolation, face_count=Metashape.FaceCount.MediumFaceCount, source_data=Metashape.DataSource.DepthMapsData)
     #doc.save(version="build_model")
     chunk.exportModel(os.path.join(OUTPUT_FOLDER, 'model.obj'))
@@ -95,12 +96,13 @@ def build_tiled():
 
     """Costruzione Modello tiled"""
     doc = Metashape.Document()
-    doc.open(path=PROJECT_PATH, read_only=True)
+    doc.open(path=PROJECT_PATH, read_only=False)
     chunk = doc.chunks[0]
+    print("dentro TILED")
 
     chunk.buildTiledModel(source_data=Metashape.DataSource.DepthMapsData)
     #doc.save(version="build_tiled")
-    chunk.exportTiledModel(os.path.join(OUTPUT_FOLDER, 'tile.zip'))
+    chunk.exportTiledModel(path=os.path.join(OUTPUT_FOLDER, 'tile.zip'), format=Metashape.TiledModelFormat.TiledModelFormatZIP)
 
 """ def export_cloud():
     import Metashape
@@ -135,13 +137,13 @@ def export_tiled():
 # Definizione degli argomenti di default
 default_args = {
     'owner': 'Visivo',
-    'depends_on_past': True, # Il task di oggi partirà solo se quello di ieri è stato completato con successo.
+    'depends_on_past': False, # Il task di oggi partirà solo se quello di ieri è stato completato con successo.
     'start_date': datetime(2025, 3, 21),
-    'retries': 1,
+    'retries': 3,
 }
 
 dag = DAG(
-    dag_id='dag_photogrammetry_no_save_depth_map_v4',
+    dag_id='dag_photogrammetry_no_save_depth_map_v5',
     default_args=default_args,
     schedule_interval=None,  # Avvio manuale per ora
     catchup=False # by default è su True, eseguirà lo script  in base alla schedule interval da quel giorno a oggi (mensilmente/giornalmente ecc)

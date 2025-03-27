@@ -140,7 +140,7 @@ def export_tiled():
 # Definizione degli argomenti di default
 default_args = {
     'owner': 'Visivo',
-    'depends_on_past': True, # Il task di oggi partirà solo se quello di ieri è stato completato con successo.
+    'depends_on_past': False, # Il task di oggi partirà solo se quello di ieri è stato completato con successo.
     'start_date': datetime(2025, 3, 21),
     'retries': 1,
 }
