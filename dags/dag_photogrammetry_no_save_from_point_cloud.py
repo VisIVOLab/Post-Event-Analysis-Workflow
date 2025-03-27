@@ -2,11 +2,6 @@ from airflow import DAG
 import os
 from airflow.operators.python import PythonOperator
 from datetime import datetime
-""" from task.align_cameras import align_cameras
-from task.build_point_cloud import build_point_cloud
-from task.build_mesh import build_mesh
-from task.build_texture import build_texture
-from task.export_results import export_results """
 
 # Imposta la cartella di output per salvare il progetto
 OUTPUT_FOLDER = "/home/leonardo/AirflowDemo/metashape_output"
@@ -92,34 +87,41 @@ def build_model():
     chunk = doc.chunks[0]
 
     chunk.buildModel(surface_type=Metashape.SurfaceType.Arbitrary, interpolation=Metashape.Interpolation.EnabledInterpolation, face_count=Metashape.FaceCount.MediumFaceCount, source_data=Metashape.DataSource.PointCloudData)
-    doc.save(version="build_model")
+    print("Crea modello")
+    chunk.exportModel(os.path.join(OUTPUT_FOLDER, 'model.obj'))
+    print("Export")
+    #doc.save(version="build_model")
 
 def build_tiled():
     import Metashape
 
     """Costruzione Modello tiled"""
     doc = Metashape.Document()
-    doc.open(path=PROJECT_PATH, read_only=False)
+    doc.open(path=PROJECT_PATH, read_only=True)
     chunk = doc.chunks[0]
 
     chunk.buildTiledModel(source_data=Metashape.DataSource.PointCloudData)
-    doc.save(version="build_tiled")
+    print("Creato")
+    chunk.exportTiledModel(path=os.path.join(OUTPUT_FOLDER, 'tile.zip'), format=Metashape.TiledModelFormat.TiledModelFormatZIP)
+    print("Exportato")
+    #doc.save(version="build_tiled")
 
 def export_cloud():
     import Metashape
 
     doc = Metashape.Document()
-    doc.open(path=PROJECT_PATH, read_only=False)
+    doc.open(path=PROJECT_PATH, read_only=True)
     chunk = doc.chunks[0]
 
     chunk.exportPointCloud(os.path.join(OUTPUT_FOLDER, 'point_cloud.las'))
     print("Esportazione completata!")
 
+"""
 def export_model():
     import Metashape
     
     doc = Metashape.Document()
-    doc.open(path=PROJECT_PATH, read_only=False)
+    doc.open(path=PROJECT_PATH, read_only=True)
     chunk = doc.chunks[0]
 
     chunk.exportModel(os.path.join(OUTPUT_FOLDER, 'model.obj'))
@@ -129,10 +131,11 @@ def export_tiled():
     import Metashape
     
     doc = Metashape.Document()
-    doc.open(path=PROJECT_PATH, read_only=False)
+    doc.open(path=PROJECT_PATH, read_only=True)
     chunk = doc.chunks[0]
     chunk.exportTiledModel(os.path.join(OUTPUT_FOLDER, 'tile.zip'))
     print("Esportazione completata!")
+    """
 
 # Definizione degli argomenti di default
 default_args = {
@@ -143,10 +146,11 @@ default_args = {
 }
 
 dag = DAG(
-    dag_id='dag_photogrammetry_v13',
+    dag_id='dag_photogrammetry_no_save_point_cloud_v4',
     default_args=default_args,
     schedule_interval=None,  # Avvio manuale per ora
-    catchup=False # Airflow ignorerà le date mancanti ed eseguirà solo la prossima esecuzione pianificata
+    catchup=False # by default è su True, eseguirà lo script  in base alla schedule interval da quel giorno a oggi (mensilmente/giornalmente ecc)
+    # Airflow ignorerà le date mancanti ed eseguirà solo la prossima esecuzione pianificata
 )
 
 # Definizione dei task
@@ -200,6 +204,7 @@ task_export_cloud = PythonOperator(
     dag=dag
 )
 
+"""
 task_export_model = PythonOperator(
     task_id='export_model',
     python_callable=export_model,
@@ -211,16 +216,10 @@ task_export_tiled = PythonOperator(
     python_callable=export_tiled,
     dag=dag
 )
-
+"""
 # Definizione delle dipendenze
-task_new_project >> task_import_photos >> task_match_and_align >> task_build_depth_maps >> task_build_point_cloud >> [task_export_cloud, task_build_model, task_build_tiled]
-task_build_model >> task_export_model
-task_build_tiled >> task_export_tiled
+task_new_project >> task_import_photos >> task_match_and_align >> task_build_depth_maps >> task_build_point_cloud >> [task_build_tiled, task_export_cloud, task_build_model]
+#task_build_model >> task_export_model
+#task_build_tiled >> task_export_tiled
 
-# oppure mettere tutte dipendenze sulla depth_map
-"""
-task_new_project >> task_import_photos >> task_match_and_align >> task_build_depth_maps >> [task_build_cloud, task_build_tiled, task_build_model]
-task_build_cloud >> task_export_cloud
-task_build_model >> task_export_model
-task_build_tiled >> task_export_tiled
-"""
+

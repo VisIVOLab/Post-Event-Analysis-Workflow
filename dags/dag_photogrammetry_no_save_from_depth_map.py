@@ -3,7 +3,6 @@ import os
 from airflow.operators.python import PythonOperator
 from datetime import datetime
 
-
 # Imposta la cartella di output per salvare il progetto
 OUTPUT_FOLDER = "/home/leonardo/AirflowDemo/metashape_output"
 PROJECT_PATH = os.path.join(OUTPUT_FOLDER, "project.psx")
@@ -73,25 +72,23 @@ def build_point_cloud():
 
     """Costruzione Point Cloud"""
     doc = Metashape.Document()
-    doc.open(path=PROJECT_PATH, read_only=False)
+    doc.open(path=PROJECT_PATH, read_only=True)
     chunk = doc.chunks[0]
 
     chunk.buildPointCloud(source_data=Metashape.DataSource.DepthMapsData)    
-    doc.save(version="build_point_cloud")
+    # doc.save(version="build_point_cloud")
+    chunk.exportPointCloud(os.path.join(OUTPUT_FOLDER, 'point_cloud.las'))
 
 def build_model():
     import Metashape
 
     """Costruzione Modello 3D"""
     doc = Metashape.Document()
-    doc.open(path=PROJECT_PATH, read_only=False)
+    doc.open(path=PROJECT_PATH, read_only=True)
     chunk = doc.chunks[0]
-
-    chunk.buildModel(surface_type=Metashape.SurfaceType.Arbitrary, interpolation=Metashape.Interpolation.EnabledInterpolation, face_count=Metashape.FaceCount.MediumFaceCount, source_data=Metashape.DataSource.PointCloudData)
-    print("Crea modello")
-    chunk.exportModel(os.path.join(OUTPUT_FOLDER, 'model.obj'))
-    print("Export")
+    chunk.buildModel(surface_type=Metashape.SurfaceType.Arbitrary, interpolation=Metashape.Interpolation.EnabledInterpolation, face_count=Metashape.FaceCount.MediumFaceCount, source_data=Metashape.DataSource.DepthMapsData)
     #doc.save(version="build_model")
+    chunk.exportModel(os.path.join(OUTPUT_FOLDER, 'model.obj'))
 
 def build_tiled():
     import Metashape
@@ -101,13 +98,11 @@ def build_tiled():
     doc.open(path=PROJECT_PATH, read_only=True)
     chunk = doc.chunks[0]
 
-    chunk.buildTiledModel(source_data=Metashape.DataSource.PointCloudData)
-    print("Creato")
-    chunk.exportTiledModel(path=os.path.join(OUTPUT_FOLDER, 'tile.zip'), format=Metashape.TiledModelFormat.TiledModelFormatZIP)
-    print("Exportato")
+    chunk.buildTiledModel(source_data=Metashape.DataSource.DepthMapsData)
     #doc.save(version="build_tiled")
+    chunk.exportTiledModel(os.path.join(OUTPUT_FOLDER, 'tile.zip'))
 
-def export_cloud():
+""" def export_cloud():
     import Metashape
 
     doc = Metashape.Document()
@@ -117,7 +112,7 @@ def export_cloud():
     chunk.exportPointCloud(os.path.join(OUTPUT_FOLDER, 'point_cloud.las'))
     print("Esportazione completata!")
 
-"""
+
 def export_model():
     import Metashape
     
@@ -135,8 +130,7 @@ def export_tiled():
     doc.open(path=PROJECT_PATH, read_only=True)
     chunk = doc.chunks[0]
     chunk.exportTiledModel(os.path.join(OUTPUT_FOLDER, 'tile.zip'))
-    print("Esportazione completata!")
-    """
+    print("Esportazione completata!") """
 
 # Definizione degli argomenti di default
 default_args = {
@@ -147,7 +141,7 @@ default_args = {
 }
 
 dag = DAG(
-    dag_id='dag_photogrammetry_no_save_v4',
+    dag_id='dag_photogrammetry_no_save_depth_map_v4',
     default_args=default_args,
     schedule_interval=None,  # Avvio manuale per ora
     catchup=False # by default è su True, eseguirà lo script  in base alla schedule interval da quel giorno a oggi (mensilmente/giornalmente ecc)
@@ -199,13 +193,13 @@ task_build_tiled = PythonOperator(
     dag=dag
 )
 
-task_export_cloud = PythonOperator(
+""" task_export_cloud = PythonOperator(
     task_id='export_cloud',
     python_callable=export_cloud,
     dag=dag
 )
 
-"""
+
 task_export_model = PythonOperator(
     task_id='export_model',
     python_callable=export_model,
@@ -216,17 +210,12 @@ task_export_tiled = PythonOperator(
     task_id='export_tiled',
     python_callable=export_tiled,
     dag=dag
-)
-"""
-# Definizione delle dipendenze
-task_new_project >> task_import_photos >> task_match_and_align >> task_build_depth_maps >> task_build_point_cloud >> [task_build_tiled, task_export_cloud, task_build_model]
-#task_build_model >> task_export_model
-#task_build_tiled >> task_export_tiled
+) """
 
-# oppure mettere tutte dipendenze sulla depth_map
-"""
-task_new_project >> task_import_photos >> task_match_and_align >> task_build_depth_maps >> [task_build_cloud, task_build_tiled, task_build_model]
-task_build_cloud >> task_export_cloud
+# Definizione delle dipendenze
+
+task_new_project >> task_import_photos >> task_match_and_align >> task_build_depth_maps >> [task_build_point_cloud, task_build_tiled, task_build_model]
+""" task_build_point_cloud >> task_export_cloud
 task_build_model >> task_export_model
-task_build_tiled >> task_export_tiled
-"""
+task_build_tiled >> task_export_tiled """
+
