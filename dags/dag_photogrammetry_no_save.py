@@ -147,10 +147,11 @@ default_args = {
 }
 
 dag = DAG(
-    dag_id='dag_photogrammetry_no_save_v2',
+    dag_id='dag_photogrammetry_no_save_v4',
     default_args=default_args,
     schedule_interval=None,  # Avvio manuale per ora
-    catchup=False # Airflow ignorerà le date mancanti ed eseguirà solo la prossima esecuzione pianificata
+    catchup=False # by default è su True, eseguirà lo script  in base alla schedule interval da quel giorno a oggi (mensilmente/giornalmente ecc)
+    # Airflow ignorerà le date mancanti ed eseguirà solo la prossima esecuzione pianificata
 )
 
 # Definizione dei task
@@ -218,7 +219,7 @@ task_export_tiled = PythonOperator(
 )
 """
 # Definizione delle dipendenze
-task_new_project >> task_import_photos >> task_match_and_align >> task_build_depth_maps >> task_build_point_cloud >> [task_export_cloud, task_build_model, task_build_tiled]
+task_new_project >> task_import_photos >> task_match_and_align >> task_build_depth_maps >> task_build_point_cloud >> [task_build_tiled, task_export_cloud, task_build_model]
 #task_build_model >> task_export_model
 #task_build_tiled >> task_export_tiled
 
