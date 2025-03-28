@@ -1,16 +1,21 @@
 from airflow import DAG
-import os
 from airflow.operators.python import PythonOperator
 from datetime import datetime
 import json
 import time
+import os
 from pathlib import Path
 
 
+dag_folder = os.path.dirname(os.path.abspath(__file__))
+project_root_folder = Path(dag_folder).parent
+
 default_args = {
     'owner': 'mauro',
-    'folder': '/home/mauro/projects/AirflowDemo/data'
+    'data_folder': project_root_folder / 'data'
 }
+
+
 
 dag = DAG(
     dag_id='mauro_test',
@@ -19,6 +24,7 @@ dag = DAG(
     catchup=False, # Airflow ignorerà le date mancanti ed eseguirà solo la prossima esecuzione pianificata
     tags = ['mauro', 'test']
 )
+
 
 def start(**kwargs):
     data = {
@@ -32,6 +38,9 @@ def start(**kwargs):
         json.dump(data, f, indent=4)
     ti = kwargs['ti']
     ti.xcom_push(key='counter', value=0)
+    print(f'cwd_ {os.getcwd()}')
+
+    print("DAG folder:", dag_folder)
 
 task_start = PythonOperator(
     task_id='start',
