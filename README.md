@@ -3,6 +3,12 @@ The repository contains a series of tests and demos using Apache Airflow, an ope
 
 The project includes automated workflow for photogrammetry and machine learning processing using **Apache Airflow** for managing tasks, **Agisoft Metashape** for image processing, and (...) machine learning in python language.
 
+# TODO - Mauro docet
+```
+dag_folder = os.path.dirname(os.path.abspath(__file__))
+project_root_folder = Path(dag_folder).parent
+```
+
 # Overview
 
 The workflow in this repository is designed to:
@@ -72,6 +78,12 @@ airflow webserver
 ```
 
 2. Visit the Airflow web interface (usually at http://localhost:8080), select your DAG, and trigger it manually or schedule it for automatic execution.
+
+2.1 Per i DAGs che richiedono `dagrun.cfg` come parametro di input eseguire: 
+```bash
+airflow dags trigger example_dag --conf "$(cat dagrun.cfg)"
+```
+Si verifica che sia un file JSON corretto se valido verrà formattato correttamente
 
 ## DAGs
 
