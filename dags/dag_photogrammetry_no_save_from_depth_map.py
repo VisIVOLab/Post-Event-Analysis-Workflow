@@ -139,15 +139,16 @@ default_args = {
     'owner': 'Visivo',
     'depends_on_past': False, # Il task di oggi partirà solo se quello di ieri è stato completato con successo.
     'start_date': datetime(2025, 3, 21),
-    'retries': 3,
+    'retries': 3
 }
 
 dag = DAG(
     dag_id='dag_photogrammetry_no_save_depth_map_v5',
     default_args=default_args,
     schedule_interval=None,  # Avvio manuale per ora
-    catchup=False # by default è su True, eseguirà lo script  in base alla schedule interval da quel giorno a oggi (mensilmente/giornalmente ecc)
+    catchup=False, # by default è su True, eseguirà lo script  in base alla schedule interval da quel giorno a oggi (mensilmente/giornalmente ecc)
     # Airflow ignorerà le date mancanti ed eseguirà solo la prossima esecuzione pianificata
+    tags= ['UI', 'depth map']
 )
 
 # Definizione dei task
