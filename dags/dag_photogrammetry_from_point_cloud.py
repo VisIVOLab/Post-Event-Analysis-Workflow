@@ -1,5 +1,5 @@
 from airflow import DAG
-import os, sys
+import os
 from airflow.operators.python import PythonOperator
 from datetime import datetime
 from airflow.models import TaskInstance
