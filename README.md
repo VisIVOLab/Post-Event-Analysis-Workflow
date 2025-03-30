@@ -83,7 +83,7 @@ airflow webserver -p 8080
 ```
 
 ### Running on Docker
-Installa Docker and Docker-compose. Download the Airflow `docker-compose.yaml`
+Install Docker and Docker-compose. Download the Airflow `docker-compose.yaml`
 ```bash
 curl -LfO 'https://airflow.apache.org/docs/apache-airflow/2.10.5/docker-compose.yaml'
 # or
@@ -110,7 +110,44 @@ It will set:
 The localhost will open on port 8080.
 
 ## Configuring Local Executor Airflow
-TODO
+Install and migrate to PostgreSQL DB
+```bash
+sudo apt-get install postgresql postgresql-contrib
+```
+
+Open PostgreSQL interface to set a new DB and user
+```bash
+sudo -u postgres psql
+
+CREATE DATABASE airflow_db;
+CREATE USER <user> WITH PASSWORD <password>;
+GRANT ALL PRIVILEGES ON DATABASE airflow_db TO <user>;
+GRANT ALL ON SCHEMA public TO <user>;
+
+\c airflow_db # open db
+
+ALTER SCHEMA public OWNER TO <user>;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO <user>;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO <user>;
+GRANT ALL PRIVILEGES ON SCHEMA public TO <user>;
+
+\q # quit
+```
+Edit `airflow.cfg`
+```json
+sql_alchemy_conn = postgresql+psycopg2://<user>:<password>@<host>/<db>
+executor = LocalExecutor
+```
+
+Install `psicopg`
+```bash
+pip install psycopg2-binary
+```
+Reset DB and create a new airflow user-account on it
+```bash
+airflow db reset
+airflow db migrate
+```
 
 ## Project Structure (TODO)
 The [dags](dags) folder contains the implemented DAGs and is organized as follows:
@@ -118,33 +155,38 @@ The [dags](dags) folder contains the implemented DAGs and is organized as follow
 ```
 AirflowDemo/
 ├── dags/
-│   └── metashape_dag.py # DAG for the photogrammetry workflow
-├── task/
-│   ├── import_photos.py
-│   ├── align_cameras.py
-│   ├── build_point_cloud.py
-│   ├── build_mesh.py
-│   ├── build_texture.py
-│   ├── export_results.py
-│   └── metashape_utils.py  # funzioni comuni
+│   ├── dag_photogrammetry_from_depth_map.py            # photogrammetry workflow based on depth map (input params)
+│   ├── dag_photogrammetry_from_point_cloud.py          # photogrammetry workflow based on point cloud (input params)
+│   ├── dag_photogrammetry_no_save_from_depth_map.py    # photogrammetry workflow based on depth map (no input params)
+│   ├── dag_photogrammetry_no_save_from_point_cloud.py  # photogrammetry workflow based on point cloud (no input params)
+│   ├── full_workflow_photogrammetry.py                 # single photogrammetry workflow
+│   └──  
+├── config/ # Metashape definitions
+│   ├── blending_modes.py
+│   ├── data_source.py
+│   └── ...
+├── src/
+            │   ├── import_photos.py
+            │   ├── align_cameras.py
+            │   ├── build_point_cloud.py
+            │   ├── build_mesh.py
+            │   ├── build_texture.py
+            │   ├── export_results.py
+            │   └── metashape_utils.py
+└── dagrun.cfg  # define settings and parameters for DAGs
 ```
 ### Run the Airflow DAG
-1. Visit the Airflow web interface (usually at http://localhost:8080), select your DAG, and trigger it manually or schedule it for automatic execution.
+1. Visit the Airflow web interface (usually at http://localhost:8080), select your DAG, and trigger it manually or schedule it for automatic execution
 
-2. Per i DAGs che richiedono `dagrun.cfg` come parametro di input eseguire: 
+2. For DAGs that require `dagrun.cfg` as an input parameter, execute:
     ```bash
     airflow dags trigger example_dag --conf "$(cat dagrun.cfg)"
     ```
-Si verifica che sia un file JSON corretto se valido verrà formattato correttamente
 
-## DAGs
+# DAGs structures
 
-### Photogrammetry
+The images demonstrate the distinct dependencies and management of tasks for machine learning, photogrammetry, data import, and data export
 
 <center><img src="img/from_point_cloud.png" width="600" align="center"></center>
 
-
-
-
-ha senso strutturare il return dell'istanza tra i vari task?
-o faccio aprire il progetto? di volta in volta?
+<center><img src="img/from_depth_maps.png" width="600" align="center"></center>
