@@ -4,11 +4,16 @@ from datetime import datetime
 import json
 import time
 import os
+import sys
 from pathlib import Path
 
 
 dag_folder = os.path.dirname(os.path.abspath(__file__))
 project_root_folder = Path(dag_folder).parent
+sys.path.append(str(project_root_folder))
+
+from src.utils import Flag
+
 
 default_args = {
     'owner': 'mauro',
@@ -25,6 +30,7 @@ dag = DAG(
     tags = ['mauro', 'test']
 )
 
+ml_flag = Flag('ml', True)
 
 def start(**kwargs):
     data = {
@@ -33,7 +39,7 @@ def start(**kwargs):
             "status": "ok"
         }]
     }
-    json_path = Path(default_args['folder']) / 'project.json'
+    json_path = Path(default_args['data_folder'])/ 'project.json'
     with open(json_path, 'w') as f:
         json.dump(data, f, indent=4)
     ti = kwargs['ti']
@@ -41,6 +47,7 @@ def start(**kwargs):
     print(f'cwd_ {os.getcwd()}')
 
     print("DAG folder:", dag_folder)
+    ml_flag.true()
 
 task_start = PythonOperator(
     task_id='start',
@@ -58,35 +65,9 @@ task_end = PythonOperator(
 )
 
 
-def init_ml_flag(**kwargs):
-    ti = kwargs['ti']
-    ti.xcom_push(key='ml_flag', value=True)
-task_init_ml_flag = PythonOperator(
-    task_id='init_ml_flag',
-    python_callable=init_ml_flag,
-    dag=dag
-)
-
-def ml_true(**kwargs):
-    ti = kwargs['ti']
-    ti.xcom_push(key='ml_flag', value=True)
-    print(f"ml_true")
-
-def ml_false(**kwargs):
-    ti = kwargs['ti']
-    ti.xcom_push(key='ml_flag', value=False)
-    print(f"ml_false")
-
-def read_ml_flag(**kwargs):  
-    ti = kwargs['ti']
-    ml_flag = ti.xcom_pull(key='ml_flag', task_ids='init_ml_flag')
-    print(f"read  ml_flag: {ml_flag}")
-    return ml_flag
-
-
 def mock(**kwargs):
     time.sleep(5)
-    ml_false(**kwargs)
+    ml_flag.false()
     return True
 
 task_mock1 = PythonOperator(
@@ -112,12 +93,10 @@ def ml(**kwargs):
     # ciclo sui batches
     while(True):
         # per ogni batch
-            # controlla il via libera
-        # ml_flag = read_ml_flag(**kwargs)
-        ti = kwargs['ti']
-        ml_flag = ti.xcom_pull(key='ml_flag', task_ids='mock1')
-        print(f"task_ml    ml_flag: {ml_flag}")    
-        if not ml_flag:
+            # controlla il via libera  
+        flag = ml_flag.get()
+        print(f"task_ml    ml_flag: {flag}")    
+        if not flag:
             break
         else:
             time.sleep(1)
@@ -129,7 +108,7 @@ def ml(**kwargs):
                     # interrompi il processo ed esci
     # setta il via libera a TRUE (per la prossima esecuzione)
 
-    ml_true(**kwargs)
+    ml_flag.true()
     return True
 
 task_ml = PythonOperator(
@@ -138,7 +117,6 @@ task_ml = PythonOperator(
     dag=dag
 )
 
-task_init_ml_flag >> task_start
 
 task_start >> task_mock1 
 task_start >> task_ml 
