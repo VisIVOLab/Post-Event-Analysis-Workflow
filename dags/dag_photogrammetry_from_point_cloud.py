@@ -1,9 +1,15 @@
 from airflow import DAG
-import os
+import os, sys
 from airflow.operators.python import PythonOperator
 from datetime import datetime
 from airflow.models import TaskInstance
 from airflow.exceptions import AirflowException
+from pathlib import Path
+
+dag_folder = os.path.dirname(os.path.abspath(__file__))
+project_root_folder = Path(dag_folder).parent
+sys.path.append(str(project_root_folder))
+
 
 #TODO: verificare che la GPU è abilitata sempre come la CPU a ogni singolo task
 # eventualmente si setta su xcom o 
@@ -118,7 +124,7 @@ def match_and_align(**kwargs):
 
 def build_depth_maps(**kwargs):
     import Metashape
-    from filter_modes import filter_modes
+    from config.filter_modes import filter_modes
 
     """Costruzione Depth Maps"""
     ti: TaskInstance = kwargs['ti']
@@ -144,7 +150,7 @@ def build_depth_maps(**kwargs):
 
 def build_point_cloud(**kwargs):
     import Metashape
-    from data_source import data_source
+    from config.data_source import data_source
 
     """Costruzione Point Cloud"""
     ti: TaskInstance = kwargs['ti']
@@ -173,10 +179,10 @@ def build_point_cloud(**kwargs):
 def build_model(**kwargs):
     import Metashape
     import logging
-    from surface_type import surface_types
-    from interpolation import interpolations
-    from face_count import face_counts
-    from data_source import data_source
+    from config.surface_type import surface_types
+    from config.interpolation import interpolations
+    from config.face_count import face_counts
+    from config.data_source import data_source
 
     """Costruzione Modello 3D"""
     ti: TaskInstance = kwargs['ti']
@@ -222,7 +228,7 @@ def build_model(**kwargs):
 
 def build_tiled(**kwargs):
     import Metashape
-    from data_source import data_sources
+    from config.data_source import data_sources
 
     """Costruzione Modello tiled"""
     ti: TaskInstance = kwargs['ti']
@@ -281,7 +287,7 @@ default_args = {
 }
 
 dag = DAG(
-    dag_id='dag_photogrammetry_point_cloud_dagrun_v2',
+    dag_id='dag_photogrammetry_point_cloud_dagrun_v3',
     default_args=default_args,
     schedule_interval=None,  # Avvio manuale per ora
     catchup=False, # by default è su True, eseguirà lo script  in base alla schedule interval da quel giorno a oggi (mensilmente/giornalmente ecc)
