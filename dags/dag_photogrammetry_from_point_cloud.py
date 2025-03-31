@@ -283,11 +283,11 @@ default_args = {
     'owner': 'Visivo',
     'depends_on_past': False, # Il task di oggi partirà solo se quello di ieri è stato completato con successo.
     'start_date': datetime(2025, 3, 21),
-    'retries': 1,
+    'retries': 3,
 }
 
 dag = DAG(
-    dag_id='dag_photogrammetry_point_cloud_dagrun_4',
+    dag_id='dag_photogrammetry_point_cloud_dagrun_v10',
     default_args=default_args,
     schedule_interval=None,  # Avvio manuale per ora
     catchup=False, # by default è su True, eseguirà lo script  in base alla schedule interval da quel giorno a oggi (mensilmente/giornalmente ecc)
@@ -359,4 +359,4 @@ task_export_cloud = PythonOperator(
 )
 
 # Definizione delle dipendenze
-task_data_initialise >> task_new_project >> task_import_photos >> task_match_and_align >> task_build_depth_maps >> task_build_point_cloud >> [task_build_tiled, task_export_cloud, task_build_model]
+task_data_initialise >> task_new_project >> task_import_photos >> task_match_and_align >> task_build_depth_maps >> task_build_point_cloud >> [task_export_cloud, task_build_tiled, task_build_model]
