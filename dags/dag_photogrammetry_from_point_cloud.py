@@ -150,7 +150,7 @@ def build_depth_maps(**kwargs):
 
 def build_point_cloud(**kwargs):
     import Metashape
-    from config.data_source import data_source
+    from config.data_source import data_sources
 
     """Costruzione Point Cloud"""
     ti: TaskInstance = kwargs['ti']
@@ -159,7 +159,7 @@ def build_point_cloud(**kwargs):
     dagrun_conf = kwargs['dag_run'].conf if 'dag_run' in kwargs else {}
     task_config = dagrun_conf.get("buildPointCloud", {})
     source_data_str = task_config.get('source_data', "Metashape.DataSource.DepthMapsData")
-    source_data = data_source.get(source_data_str, Metashape.DataSource.DepthMapsData)
+    source_data = data_sources.get(source_data_str, Metashape.DataSource.DepthMapsData)
     point_colors = task_config.get('point_colors', True)
     point_confidence = task_config.get('point_confidence', True)
     keep_depth = task_config.get('keep_depth', True)
@@ -182,7 +182,7 @@ def build_model(**kwargs):
     from config.surface_type import surface_types
     from config.interpolation import interpolations
     from config.face_count import face_counts
-    from config.data_source import data_source
+    from config.data_source import data_sources
 
     """Costruzione Modello 3D"""
     ti: TaskInstance = kwargs['ti']
@@ -198,7 +198,7 @@ def build_model(**kwargs):
     face_count_str = task_config.get('face_count', "Metashape.FaceCount.MediumFaceCount")
     face_count = face_counts.get(face_count_str, Metashape.FaceCount.MediumFaceCount)
     source_data_str = task_config.get('source_data', "Metashape.DataSource.PointCloudData")
-    source_data = data_source.get(source_data_str, Metashape.DataSource.PointCloudData)
+    source_data = data_sources.get(source_data_str, Metashape.DataSource.PointCloudData)
     vertex_colors = task_config.get('vertex_colors', True)
     vertex_confidence = task_config.get('vertex_confidence', True)
     keep_depth = task_config.get('keep_depth', True)
@@ -287,7 +287,7 @@ default_args = {
 }
 
 dag = DAG(
-    dag_id='dag_photogrammetry_point_cloud_dagrun_v3',
+    dag_id='dag_photogrammetry_point_cloud_dagrun_4',
     default_args=default_args,
     schedule_interval=None,  # Avvio manuale per ora
     catchup=False, # by default è su True, eseguirà lo script  in base alla schedule interval da quel giorno a oggi (mensilmente/giornalmente ecc)
