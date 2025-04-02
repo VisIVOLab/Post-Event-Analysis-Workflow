@@ -35,6 +35,9 @@ def import_mask(masks_directory: str):
     if not os.path.isdir(masks_directory):
         raise NotADirectoryError(f"Il percorso delle maschere '{masks_directory}' non è una directory valida")
 
+    # Reset any mask in cameras
+    for camera in chunk.cameras:
+        camera.mask = None
 
     # Importa le maschere sulle camere
     for camera in chunk.cameras:
@@ -64,6 +67,8 @@ def select_points_by_mask(folder):
     chunk = doc.chunks[0]
     cameras = [camera for camera in chunk.cameras if camera.mask is not None]
     try:
+        # Reset classification on point class, which assigns "Created (Never classified)" class to all the points in the active dense cloud
+        chunk.point_cloud.assignClass(0)
         chunk.point_cloud.selectMaskedPoints(cameras, softness=4, only_visible=True)
         chunk.point_cloud.assignClassToSelection(target=Metashape.PointClass.Ground)
     except Exception as e:
@@ -72,9 +77,11 @@ def select_points_by_mask(folder):
 
 
 def export_results(folder):
-    # Funzione per esportare i risultati
-    print(f"Esportando risultati da {folder}")
-    # Codice per esportare i risultati
+    import Metashape
+    doc = Metashape.Document()
+    doc.open(path=PROJECT_PATH, read_only=False)
+    chunk = doc.chunks[0]
+    chunk.exportPointCloud(path=OUTPUT_FOLDER+"/classification.las", source_data= Metashape.DataSource.PointCloudData, save_point_classification=True, format=Metashape.PointCloudFormat.PointCloudFormatLAS, classes= [Metashape.PointClass.Ground])
 
 # Funzione per generare dinamicamente i task
 def create_dynamic_tasks(dag, base_folder):
