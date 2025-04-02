@@ -10,7 +10,6 @@ dag_folder = os.path.dirname(os.path.abspath(__file__))
 project_root_folder = Path(dag_folder).parent
 sys.path.append(str(project_root_folder))
 
-
 #TODO: verificare che la GPU è abilitata sempre come la CPU a ogni singolo task
 # eventualmente si setta su xcom o 
 
@@ -286,6 +285,8 @@ dag = DAG(
     tags= ['dagrun', 'depth map', 'no save']
 )
 
+#install_task = install_dependencies_task(dag)
+
 # Definizione dei task
 task_data_initialise = PythonOperator(
     task_id="data_initialise",
@@ -341,6 +342,8 @@ task_build_tiled = PythonOperator(
     provide_context=True,
     dag=dag
 )
+
+# install_task >> 
 
 # Definizione delle dipendenze
 task_data_initialise >> task_new_project >> task_import_photos >> task_match_and_align >> task_build_depth_maps >> [task_build_point_cloud, task_build_tiled, task_build_model]
