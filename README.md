@@ -149,8 +149,7 @@ airflow db reset
 airflow db migrate
 ```
 
-## Project Structure (TODO)
-The [dags](dags) folder contains the implemented DAGs and is organized as follows:
+## Project Structure
 
 ```
 AirflowDemo/
@@ -160,20 +159,23 @@ AirflowDemo/
 │   ├── dag_photogrammetry_no_save_from_depth_map.py    # photogrammetry workflow based on depth map (no input params)
 │   ├── dag_photogrammetry_no_save_from_point_cloud.py  # photogrammetry workflow based on point cloud (no input params)
 │   ├── full_workflow_photogrammetry.py                 # single photogrammetry workflow
-│   └──  
+│   ├── dag_point_classification.py                     # photogrammetry workflow to import masks and export point cloud classification
+│   └── ...
 ├── config/ # Metashape definitions
 │   ├── blending_modes.py
 │   ├── data_source.py
 │   └── ...
-├── src/
-            │   ├── import_photos.py
-            │   ├── align_cameras.py
-            │   ├── build_point_cloud.py
-            │   ├── build_mesh.py
-            │   ├── build_texture.py
-            │   ├── export_results.py
-            │   └── metashape_utils.py
-└── dagrun.cfg  # define settings and parameters for DAGs
+├── metashape-module/ # Metashape python module for linux
+│   └── Metashape-2.2.0...whl
+├── src/ (TODO)
+│   ├── import_photos.py
+│   ├── align_cameras.py
+│   ├── build_point_cloud.py
+│   ├── build_mesh.py
+│   ├── build_texture.py
+│   ├── export_results.py
+│   └── metashape_utils.py
+└── dagrun.cfg  # define settings and parameters for DAGs input
 ```
 ### Run the Airflow DAG
 1. Visit the Airflow web interface (usually at http://localhost:8080), select your DAG, and trigger it manually or schedule it for automatic execution
@@ -185,7 +187,9 @@ AirflowDemo/
 
 # DAGs structures
 
-The images demonstrate the distinct dependencies and management of tasks for machine learning, photogrammetry, data import, and data export
+The images demonstrate in different color the distinct dependencies and management of tasks for machine learning, photogrammetry, data import, and data export
+
+<center><img src="img/ML_Photo_from_point_cloud.png" width="600" align="center"></center>
 
 <center><img src="img/from_point_cloud.png" width="600" align="center"></center>
 
