@@ -42,8 +42,10 @@ def new_project(**kwargs):
     import Metashape
     import logging
 
-    """Apre o crea un progetto Metashape."""
-    # Checking compatibility
+    """
+    New Metashape project
+    """
+    # Check compatibility
     logging.info("Checking compatibility")
     compatible_major_version = "2.2"
     found_major_version = ".".join(Metashape.app.version.split('.')[:2])
@@ -55,7 +57,7 @@ def new_project(**kwargs):
 
     doc = Metashape.Document()
     doc.save(path=project_path, version="new project")
-    logging.info("🚀 progetto creato!")
+    logging.info("New project!")
 
 def import_photos(**kwargs):
     import Metashape
@@ -75,22 +77,26 @@ def import_photos(**kwargs):
     doc.open(path=project_path, read_only=False)
     chunk = doc.addChunk()  # Aggiunge un nuovo chunk al progetto
     chunk.addPhotos(photos)
-    doc.save(version="import_photos")
 
-    logging.info(f"🚀 {len(chunk.cameras)} images loaded.")
+    # filter photos by image quality
+    chunk.analyzeImages(cameras = chunk.cameras, filter_mask= False)
+    disabled_photos = 0
+    for camera in chunk.cameras:
+        if float(camera.meta['Image/Quality']) < 0.5:
+            camera.enabled = False
+            disabled_photos += 1
+
+    doc.save(version="import_photos")
+    logging.info(f"{len(chunk.cameras)} images loaded.")
+    logging.info(f"{disabled_photos} images disabled.")
 
 def match_and_align(**kwargs):
     import Metashape
     import logging
     
-    """Image matching and alignment"""
-    
-    # CPU disable and GPU enabled
-    Metashape.app.cpu_enable = False
-    gpus = Metashape.app.enumGPUDevices()
-    num_gpus = len(gpus)
-    gpu_mask = 2**num_gpus - 1
-    Metashape.app.gpu_mask = gpu_mask
+    """
+    Image matching and alignment
+    """
 
     ti: TaskInstance = kwargs['ti']
     project_path = ti.xcom_pull(task_ids='data_initialise', key='project_path')
@@ -300,7 +306,7 @@ default_args = {
 }
 
 dag = DAG(
-    dag_id='dag_photogrammetry_depth_map_dagrun_v4',
+    dag_id='dag_photogrammetry_depth_map_dagrun_v5',
     default_args=default_args,
     schedule_interval=None,  # Avvio manuale per ora
     catchup=False, # by default è su True, eseguirà lo script  in base alla schedule interval da quel giorno a oggi (mensilmente/giornalmente ecc)
