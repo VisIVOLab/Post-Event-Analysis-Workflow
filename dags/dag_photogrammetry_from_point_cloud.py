@@ -77,6 +77,15 @@ def import_photos(**kwargs):
     doc.open(path=project_path, read_only=False)
     chunk = doc.addChunk()  # Aggiunge un nuovo chunk al progetto
     chunk.addPhotos(photos)
+
+    # filter photos by image quality
+    chunk.analyzeImages(cameras = chunk.cameras, filter_mask= False)
+    disabled_photos = 0
+    for camera in chunk.cameras:
+        if float(camera.meta['Image/Quality']) < 0.5:
+            camera.enabled = False
+            disabled_photos += 1
+    
     doc.save(version="import_photos")
 
     logging.info(f"🚀 {len(chunk.cameras)} images loaded.")
