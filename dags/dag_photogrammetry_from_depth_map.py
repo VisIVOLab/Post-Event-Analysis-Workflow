@@ -215,8 +215,6 @@ def build_model(**kwargs):
     ti: TaskInstance = kwargs['ti']
     project_path = ti.xcom_pull(task_ids='data_initialise', key='project_path')
     output_folder = ti.xcom_pull(task_ids='data_initialise', key='output_path')
-    Metashape.app.cpu_enable = ti.xcom_pull(task_ids='data_initialise', key='cpu_enable')
-    Metashape.app.gpu_mask = ti.xcom_pull(task_ids='data_initialise', key='gpu_mask')
 
     dagrun_conf = kwargs['dag_run'].conf if 'dag_run' in kwargs else {}
     task_config = dagrun_conf.get("buildModel", {})
@@ -239,6 +237,8 @@ def build_model(**kwargs):
     doc = Metashape.Document()
     doc.open(path=project_path, read_only=False)
     chunk = doc.chunks[0]
+    Metashape.app.cpu_enable = ti.xcom_pull(task_ids='data_initialise', key='cpu_enable')
+    Metashape.app.gpu_mask = ti.xcom_pull(task_ids='data_initialise', key='gpu_mask')
 
     chunk.buildModel(surface_type=surface_type, 
                      interpolation=interpolation, 
@@ -251,20 +251,22 @@ def build_model(**kwargs):
                      blocks_size = blocks_size,
                      build_texture= build_texture,
                      subdivide_task = subdivide_task)
+    chunk.buildUV(mapping_mode= Metashape.MappingMode.GenericMapping, page_count=1, texture_size=8192)
+    chunk.buildTexture(blending_mode= Metashape.BlendingMode.MosaicBlending, texture_size= 8192, fill_holes= True, ghosting_filter= True)
     chunk.exportModel(os.path.join(output_folder, 'model.obj'))
+    chunk.exportTexture(path=os.path.join(output_folder, 'texture.jpg'), texture_type= Metashape.Model.TextureType.DiffuseMap, save_alpha= False,  raster_transform= Metashape.RasterTransformType.RasterTransformNone)
     logging.info(f"🚀 Export model.")
     #doc.save(version="build_model")
 
 def build_tiled(**kwargs):
     import Metashape
+    import logging
     from config.data_source import data_sources
 
     """Build Tiled model process"""
     ti: TaskInstance = kwargs['ti']
     project_path = ti.xcom_pull(task_ids='data_initialise', key='project_path')
     output_folder = ti.xcom_pull(task_ids='data_initialise', key='output_path')
-    Metashape.app.cpu_enable = ti.xcom_pull(task_ids='data_initialise', key='cpu_enable')
-    Metashape.app.gpu_mask = ti.xcom_pull(task_ids='data_initialise', key='gpu_mask')
 
     dagrun_conf = kwargs['dag_run'].conf if 'dag_run' in kwargs else {}
     task_config = dagrun_conf.get("buildTiledModel", {})
@@ -281,6 +283,8 @@ def build_tiled(**kwargs):
     doc = Metashape.Document()
     doc.open(path=project_path, read_only=True)
     chunk = doc.chunks[0]
+    Metashape.app.cpu_enable = ti.xcom_pull(task_ids='data_initialise', key='cpu_enable')
+    Metashape.app.gpu_mask = ti.xcom_pull(task_ids='data_initialise', key='gpu_mask')
 
     chunk.buildTiledModel(pixel_size = pixel_size,
                           tile_size = tile_size,
@@ -290,9 +294,8 @@ def build_tiled(**kwargs):
                           transfer_texture = transfer_texture,
                           keep_depth = keep_depth,
                           subdivide_task = subdivide_task)
-    print("modello tiled")
     chunk.exportTiledModel(path=os.path.join(output_folder, 'tile.zip'), format=Metashape.TiledModelFormat.TiledModelFormatZIP)
-    print("modello tiled esportato")
+    logging.info(f" Export tiled model.")
     #doc.save(version="build_tiled")
 
 
@@ -306,7 +309,7 @@ default_args = {
 }
 
 dag = DAG(
-    dag_id='dag_photogrammetry_depth_map_dagrun_v5',
+    dag_id='dag_photogrammetry_depth_map_dagrun_v7',
     default_args=default_args,
     schedule_interval=None,  # Avvio manuale per ora
     catchup=False, # by default è su True, eseguirà lo script  in base alla schedule interval da quel giorno a oggi (mensilmente/giornalmente ecc)

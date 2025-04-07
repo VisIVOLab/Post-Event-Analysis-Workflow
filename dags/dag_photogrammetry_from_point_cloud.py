@@ -11,8 +11,6 @@ project_root_folder = Path(dag_folder).parent
 sys.path.append(str(project_root_folder))
 
 
-#TODO: verificare che la GPU è abilitata sempre come la CPU a ogni singolo task
-# eventualmente si setta su xcom o 
 
 def import_dag_configuration(**kwargs):
     import Metashape
@@ -246,7 +244,11 @@ def build_model(**kwargs):
                      blocks_size = blocks_size,
                      build_texture= build_texture,
                      subdivide_task = subdivide_task)
+    chunk.buildUV(mapping_mode= Metashape.MappingMode.GenericMapping, page_count=1, texture_size=8192)
+    chunk.buildTexture(blending_mode= Metashape.BlendingMode.MosaicBlending, texture_size= 8192, fill_holes= True, ghosting_filter= True)
     chunk.exportModel(os.path.join(output_folder, 'model.obj'))
+    chunk.exportTexture(path=os.path.join(output_folder, 'texture.jpg'), texture_type= Metashape.Model.TextureType.DiffuseMap, save_alpha= False,  raster_transform= Metashape.RasterTransformType.RasterTransformNone)
+
     logging.info(f"🚀 Export model.")
     #doc.save(version="build_model")
 
