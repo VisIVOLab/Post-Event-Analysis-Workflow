@@ -15,8 +15,9 @@ sys.path.append(str(project_root_folder))
 # eventualmente si setta su xcom o 
 
 def import_dag_configuration(**kwargs):
+    import Metashape
     """
-    Save the project path into the XCom space
+    Save project path and settings into the XCom space
     """
     ti: TaskInstance = kwargs['ti']
     
@@ -32,6 +33,12 @@ def import_dag_configuration(**kwargs):
     if image_path == None:  
         raise AirflowException("Error: no image_path folder selected!")
     ti.xcom_push(key='image_path', value=image_path)
+    # cpu and gpu default setting
+    gpus = Metashape.app.enumGPUDevices()
+    num_gpus = len(gpus)
+    gpu_mask = 2**num_gpus - 1
+    ti.xcom_push(key='gpu_mask', value= gpu_mask)
+    ti.xcom_push(key='cpu_enable', value=False)
 
 def new_project(**kwargs):
     import Metashape
@@ -44,8 +51,6 @@ def new_project(**kwargs):
     found_major_version = ".".join(Metashape.app.version.split('.')[:2])
     if found_major_version != compatible_major_version:
         raise Exception("Incompatible Metashape version: {} != {}".format(found_major_version, compatible_major_version))
-    
-    #TODO: test cpu/gpu
 
     ti: TaskInstance = kwargs['ti']
     project_path = ti.xcom_pull(task_ids='data_initialise', key='project_path')
@@ -61,6 +66,8 @@ def import_photos(**kwargs):
     ti: TaskInstance = kwargs['ti']
     project_path = ti.xcom_pull(task_ids='data_initialise', key='project_path')
     image_folder = ti.xcom_pull(task_ids="data_initialise", key='image_path')
+    Metashape.app.cpu_enable = ti.xcom_pull(task_ids='data_initialise', key='cpu_enable')
+    Metashape.app.gpu_mask = ti.xcom_pull(task_ids='data_initialise', key='gpu_mask')
     try:
         photos = [entry.path for entry in os.scandir(image_folder) if entry.is_file() and entry.name.lower().endswith(('.jpg', '.jpeg', '.tif', '.tiff'))]
     except Exception as e:
@@ -81,6 +88,8 @@ def match_and_align(**kwargs):
     """Matching e allineamento delle immagini"""
     ti: TaskInstance = kwargs['ti']
     project_path = ti.xcom_pull(task_ids='data_initialise', key='project_path')
+    Metashape.app.cpu_enable = ti.xcom_pull(task_ids='data_initialise', key='cpu_enable')
+    Metashape.app.gpu_mask = ti.xcom_pull(task_ids='data_initialise', key='gpu_mask')
 
     dagrun_conf = kwargs['dag_run'].conf if 'dag_run' in kwargs else {}
     task_config = dagrun_conf.get("matchPhotos", {})
@@ -129,6 +138,8 @@ def build_depth_maps(**kwargs):
     """Costruzione Depth Maps"""
     ti: TaskInstance = kwargs['ti']
     project_path = ti.xcom_pull(task_ids='data_initialise', key='project_path')
+    Metashape.app.cpu_enable = ti.xcom_pull(task_ids='data_initialise', key='cpu_enable')
+    Metashape.app.gpu_mask = ti.xcom_pull(task_ids='data_initialise', key='gpu_mask')
 
     dagrun_conf = kwargs['dag_run'].conf if 'dag_run' in kwargs else {}
     task_config = dagrun_conf.get("buildDepthMaps", {})
@@ -155,6 +166,8 @@ def build_point_cloud(**kwargs):
     """Costruzione Point Cloud"""
     ti: TaskInstance = kwargs['ti']
     project_path = ti.xcom_pull(task_ids='data_initialise', key='project_path')
+    Metashape.app.cpu_enable = ti.xcom_pull(task_ids='data_initialise', key='cpu_enable')
+    Metashape.app.gpu_mask = ti.xcom_pull(task_ids='data_initialise', key='gpu_mask')
 
     dagrun_conf = kwargs['dag_run'].conf if 'dag_run' in kwargs else {}
     task_config = dagrun_conf.get("buildPointCloud", {})
@@ -188,6 +201,8 @@ def build_model(**kwargs):
     ti: TaskInstance = kwargs['ti']
     project_path = ti.xcom_pull(task_ids='data_initialise', key='project_path')
     output_folder = ti.xcom_pull(task_ids='data_initialise', key='output_path')
+    Metashape.app.cpu_enable = ti.xcom_pull(task_ids='data_initialise', key='cpu_enable')
+    Metashape.app.gpu_mask = ti.xcom_pull(task_ids='data_initialise', key='gpu_mask')
 
     dagrun_conf = kwargs['dag_run'].conf if 'dag_run' in kwargs else {}
     task_config = dagrun_conf.get("buildModel", {})
@@ -234,6 +249,8 @@ def build_tiled(**kwargs):
     ti: TaskInstance = kwargs['ti']
     project_path = ti.xcom_pull(task_ids='data_initialise', key='project_path')
     output_folder = ti.xcom_pull(task_ids='data_initialise', key='output_path')
+    Metashape.app.cpu_enable = ti.xcom_pull(task_ids='data_initialise', key='cpu_enable')
+    Metashape.app.gpu_mask = ti.xcom_pull(task_ids='data_initialise', key='gpu_mask')
 
     dagrun_conf = kwargs['dag_run'].conf if 'dag_run' in kwargs else {}
     task_config = dagrun_conf.get("buildTiledModel", {})
@@ -270,6 +287,8 @@ def export_cloud(**kwargs):
     ti: TaskInstance = kwargs['ti']
     project_path = ti.xcom_pull(task_ids='data_initialise', key='project_path')
     output_folder = ti.xcom_pull(task_ids='data_initialise', key='output_path')
+    Metashape.app.cpu_enable = ti.xcom_pull(task_ids='data_initialise', key='cpu_enable')
+    Metashape.app.gpu_mask = ti.xcom_pull(task_ids='data_initialise', key='gpu_mask')
 
     doc = Metashape.Document()
     doc.open(path=project_path, read_only=True)
