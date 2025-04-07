@@ -10,319 +10,39 @@ dag_folder = os.path.dirname(os.path.abspath(__file__))
 project_root_folder = Path(dag_folder).parent
 sys.path.append(str(project_root_folder))
 
-
-def import_dag_configuration(**kwargs):
-    import Metashape
-
-    """
-    Save project path and settings into the XCom space
-    """
-    ti: TaskInstance = kwargs['ti']
-    
-    # refine project.psx path
-    dagrun_conf = kwargs['dag_run'].conf if 'dag_run' in kwargs else {}
-    task_config = dagrun_conf.get("settings", {})
-    project_path = task_config.get('project_path', '.')
-    # save on xcom
-    ti.xcom_push(key='output_path', value=project_path)
-    project_path = os.path.join(project_path, "project.psx")
-    image_path = task_config.get('image_path', None)
-    ti.xcom_push(key='project_path', value=project_path)
-    if image_path == None:  
-        raise AirflowException("Error: no image_path folder selected!")
-    ti.xcom_push(key='image_path', value=image_path)
-    # cpu and gpu default setting
-    gpus = Metashape.app.enumGPUDevices()
-    num_gpus = len(gpus)
-    gpu_mask = 2**num_gpus - 1
-    ti.xcom_push(key='gpu_mask', value= gpu_mask)
-    ti.xcom_push(key='cpu_enable', value=False)
-
-def new_project(**kwargs):
-    import Metashape
-    import logging
-
-    """
-    New Metashape project
-    """
-    # Check compatibility
-    logging.info("Checking compatibility")
-    compatible_major_version = "2.2"
-    found_major_version = ".".join(Metashape.app.version.split('.')[:2])
-    if found_major_version != compatible_major_version:
-        raise Exception("Incompatible Metashape version: {} != {}".format(found_major_version, compatible_major_version))
-    
-    ti: TaskInstance = kwargs['ti']
-    project_path = ti.xcom_pull(task_ids='data_initialise', key='project_path')
-
-    doc = Metashape.Document()
-    doc.save(path=project_path, version="new project")
-    logging.info("New project!")
-
-def import_photos(**kwargs):
-    import Metashape
-    import logging, os
-
-    ti: TaskInstance = kwargs['ti']
-    project_path = ti.xcom_pull(task_ids='data_initialise', key='project_path')
-    image_folder = ti.xcom_pull(task_ids="data_initialise", key='image_path')
-    Metashape.app.cpu_enable = ti.xcom_pull(task_ids='data_initialise', key='cpu_enable')
-    Metashape.app.gpu_mask = ti.xcom_pull(task_ids='data_initialise', key='gpu_mask')
-    try:
-        photos = [entry.path for entry in os.scandir(image_folder) if entry.is_file() and entry.name.lower().endswith(('.jpg', '.jpeg', '.tif', '.tiff'))]
-    except Exception as e:
-        print(f"Error import photos: {e}")
-    
-    doc = Metashape.Document()
-    doc.open(path=project_path, read_only=False)
-    chunk = doc.addChunk()  # Aggiunge un nuovo chunk al progetto
-    chunk.addPhotos(photos)
-
-    # filter photos by image quality
-    chunk.analyzeImages(cameras = chunk.cameras, filter_mask= False)
-    disabled_photos = 0
-    for camera in chunk.cameras:
-        if float(camera.meta['Image/Quality']) < 0.5:
-            camera.enabled = False
-            disabled_photos += 1
-
-    doc.save(version="import_photos")
-    logging.info(f"{len(chunk.cameras)} images loaded.")
-    logging.info(f"{disabled_photos} images disabled.")
-
-def match_and_align(**kwargs):
-    import Metashape
-    import logging
-    
-    """
-    Image matching and alignment
-    """
-
-    ti: TaskInstance = kwargs['ti']
-    project_path = ti.xcom_pull(task_ids='data_initialise', key='project_path')
-    Metashape.app.cpu_enable = ti.xcom_pull(task_ids='data_initialise', key='cpu_enable')
-    Metashape.app.gpu_mask = ti.xcom_pull(task_ids='data_initialise', key='gpu_mask')
-
-    dagrun_conf = kwargs['dag_run'].conf if 'dag_run' in kwargs else {}
-    task_config = dagrun_conf.get("matchPhotos", {})
-    downscale = task_config.get('downscale', 2)
-    downscale_3d = task_config.get('downscale_3d', 4)
-    keypoint_limit = task_config.get('keypoint_limit', 40000)
-    tiepoint_limit = task_config.get('tiepoint_limit', 10000)
-    generic_preselection = task_config.get('generic_preselection', True)
-    reference_preselection = task_config.get('reference_preselection', False)
-    filter_stationary_points = task_config.get('filter_stationary_points', True)
-    keep_keypoints = task_config.get('keep_keypoints', True)
-    guided_matching = task_config.get('guided_matching', False)
-    subdivide_task = task_config.get('subdivide_task', True)
-
-    doc = Metashape.Document()
-    doc.open(path=project_path, read_only=False)
-    chunk = doc.chunks[0]
-
-    chunk.matchPhotos(downscale=downscale, 
-                      downscale_3d=downscale_3d, 
-                      generic_preselection= generic_preselection, 
-                      keypoint_limit=keypoint_limit, 
-                      tiepoint_limit=tiepoint_limit,
-                      reference_preselection = reference_preselection,
-                      filter_stationary_points = filter_stationary_points,
-                      keep_keypoints = keep_keypoints,
-                      guided_matching = guided_matching,
-                      subdivide_task = subdivide_task)
-    
-    task_config = dagrun_conf.get("alignCameras", {})
-    adaptive_fitting = task_config.get('adaptive_fitting', False)
-    reset_alignment = task_config.get('reset_alignment', True)
-    subdivide_task = task_config.get('subdivide_task', True)
-
-    chunk.alignCameras(adaptive_fitting = adaptive_fitting,
-                       reset_alignment = reset_alignment,
-                       subdivide_task= subdivide_task)
-    
-    doc.save(version="match_and_align")
-    logging.info(f"🚀 Matched photos.")
-
-def build_depth_maps(**kwargs):
-    import Metashape
-    from config.filter_modes import filter_modes
-
-    """Build Depth Maps process"""
-    ti: TaskInstance = kwargs['ti']
-    project_path = ti.xcom_pull(task_ids='data_initialise', key='project_path')
-    Metashape.app.cpu_enable = ti.xcom_pull(task_ids='data_initialise', key='cpu_enable')
-    Metashape.app.gpu_mask = ti.xcom_pull(task_ids='data_initialise', key='gpu_mask')
-
-    dagrun_conf = kwargs['dag_run'].conf if 'dag_run' in kwargs else {}
-    task_config = dagrun_conf.get("buildDepthMaps", {})
-    downscale = task_config.get('downscale', 4)
-    filter_mode_str = task_config.get('filter_mode', "Metashape.FilterMode.MildFiltering")
-    filter_mode = filter_modes.get(filter_mode_str, Metashape.FilterMode.MildFiltering)
-    reuse_depth = task_config.get('reuse_depth', False)
-    subdivide_task = task_config.get('subdivide_task', True)
-
-    doc = Metashape.Document()
-    doc.open(path=project_path, read_only=False)
-    chunk = doc.chunks[0]
-
-    chunk.buildDepthMaps(downscale=downscale, 
-                         filter_mode=filter_mode,
-                         reuse_depth = reuse_depth,
-                         subdivide_task = subdivide_task)
-    doc.save(version="build_depth_maps")
-
-def build_point_cloud(**kwargs):
-    import Metashape
-    from config.data_source import data_sources
-
-    """Build Point Cloud process"""
-    ti: TaskInstance = kwargs['ti']
-    project_path = ti.xcom_pull(task_ids='data_initialise', key='project_path')
-    output_folder = ti.xcom_pull(task_ids='data_initialise', key='output_path')
-    Metashape.app.cpu_enable = ti.xcom_pull(task_ids='data_initialise', key='cpu_enable')
-    Metashape.app.gpu_mask = ti.xcom_pull(task_ids='data_initialise', key='gpu_mask')
-
-    dagrun_conf = kwargs['dag_run'].conf if 'dag_run' in kwargs else {}
-    task_config = dagrun_conf.get("buildPointCloud", {})
-    source_data_str = task_config.get('source_data', "Metashape.DataSource.DepthMapsData")
-    source_data = data_sources.get(source_data_str, Metashape.DataSource.DepthMapsData)
-    point_colors = task_config.get('point_colors', True)
-    point_confidence = task_config.get('point_confidence', True)
-    keep_depth = task_config.get('keep_depth', True)
-    subdivide_task = task_config.get('subdivide_task', True)
-
-    doc = Metashape.Document()
-    doc.open(path=project_path, read_only=False)
-    chunk = doc.chunks[0]
-
-    chunk.buildPointCloud(source_data=source_data,
-                          point_colors= point_colors,
-                          point_confidence= point_confidence,
-                          keep_depth= keep_depth,
-                          subdivide_task = subdivide_task)
-    chunk.exportPointCloud(os.path.join(output_folder, 'point_cloud.las'))
-    #doc.save(version="build_point_cloud")
-
-def build_model(**kwargs):
-    import Metashape
-    import logging
-    from config.surface_type import surface_types
-    from config.interpolation import interpolations
-    from config.face_count import face_counts
-    from config.data_source import data_sources
-
-    """Build 3D model process"""
-    ti: TaskInstance = kwargs['ti']
-    project_path = ti.xcom_pull(task_ids='data_initialise', key='project_path')
-    output_folder = ti.xcom_pull(task_ids='data_initialise', key='output_path')
-
-    dagrun_conf = kwargs['dag_run'].conf if 'dag_run' in kwargs else {}
-    task_config = dagrun_conf.get("buildModel", {})
-    surface_type_str = task_config.get('surface_type', "Metashape.SurfaceType.Arbitrary")
-    surface_type = surface_types.get(surface_type_str, Metashape.SurfaceType.Arbitrary)
-    interpolation_str = task_config.get('interpolation', "Metashape.Interpolation.EnabledInterpolation")
-    interpolation = interpolations.get(interpolation_str, Metashape.Interpolation.EnabledInterpolation)
-    face_count_str = task_config.get('face_count', "Metashape.FaceCount.MediumFaceCount")
-    face_count = face_counts.get(face_count_str, Metashape.FaceCount.MediumFaceCount)
-    source_data_str = task_config.get('source_data', "Metashape.DataSource.DepthMapsData")
-    source_data = data_sources.get(source_data_str, Metashape.DataSource.DepthMapsData)
-    vertex_colors = task_config.get('vertex_colors', True)
-    vertex_confidence = task_config.get('vertex_confidence', True)
-    keep_depth = task_config.get('keep_depth', True)
-    split_in_blocks = task_config.get('split_in_blocks', False)
-    blocks_size = task_config.get('blocks_size', 250)
-    build_texture = task_config.get('build_texture', True)
-    subdivide_task = task_config.get('subdivide_task', True)
-
-    doc = Metashape.Document()
-    doc.open(path=project_path, read_only=False)
-    chunk = doc.chunks[0]
-    Metashape.app.cpu_enable = ti.xcom_pull(task_ids='data_initialise', key='cpu_enable')
-    Metashape.app.gpu_mask = ti.xcom_pull(task_ids='data_initialise', key='gpu_mask')
-
-    chunk.buildModel(surface_type=surface_type, 
-                     interpolation=interpolation, 
-                     face_count=face_count, 
-                     source_data=source_data,
-                     vertex_colors=vertex_colors,
-                     vertex_confidence=vertex_confidence,
-                     keep_depth = keep_depth,
-                     split_in_blocks = split_in_blocks,
-                     blocks_size = blocks_size,
-                     build_texture= build_texture,
-                     subdivide_task = subdivide_task)
-    chunk.buildUV(mapping_mode= Metashape.MappingMode.GenericMapping, page_count=1, texture_size=8192)
-    chunk.buildTexture(blending_mode= Metashape.BlendingMode.MosaicBlending, texture_size= 8192, fill_holes= True, ghosting_filter= True)
-    chunk.exportModel(os.path.join(output_folder, 'model.obj'))
-    chunk.exportTexture(path=os.path.join(output_folder, 'texture.jpg'), texture_type= Metashape.Model.TextureType.DiffuseMap, save_alpha= False,  raster_transform= Metashape.RasterTransformType.RasterTransformNone)
-    logging.info(f"🚀 Export model.")
-    #doc.save(version="build_model")
-
-def build_tiled(**kwargs):
-    import Metashape
-    import logging
-    from config.data_source import data_sources
-
-    """Build Tiled model process"""
-    ti: TaskInstance = kwargs['ti']
-    project_path = ti.xcom_pull(task_ids='data_initialise', key='project_path')
-    output_folder = ti.xcom_pull(task_ids='data_initialise', key='output_path')
-
-    dagrun_conf = kwargs['dag_run'].conf if 'dag_run' in kwargs else {}
-    task_config = dagrun_conf.get("buildTiledModel", {})
-    pixel_size = task_config.get('pixel_size', 0)
-    tile_size = task_config.get('tile_size', 256)
-    source_data_str = task_config.get('source_data', "Metashape.DataSource.DepthMapsData")
-    source_data = data_sources.get(source_data_str, Metashape.DataSource.DepthMapsData)
-    face_count = task_config.get('face_count', 20000)
-    ghosting_filter = task_config.get('ghosting_filter', False)
-    transfer_texture = task_config.get('transfer_texture', False)
-    keep_depth = task_config.get('keep_depth', True)
-    subdivide_task = task_config.get('subdivide_task', True)
-
-    doc = Metashape.Document()
-    doc.open(path=project_path, read_only=True)
-    chunk = doc.chunks[0]
-    Metashape.app.cpu_enable = ti.xcom_pull(task_ids='data_initialise', key='cpu_enable')
-    Metashape.app.gpu_mask = ti.xcom_pull(task_ids='data_initialise', key='gpu_mask')
-
-    chunk.buildTiledModel(pixel_size = pixel_size,
-                          tile_size = tile_size,
-                          source_data=source_data,
-                          face_count = face_count,
-                          ghosting_filter = ghosting_filter,
-                          transfer_texture = transfer_texture,
-                          keep_depth = keep_depth,
-                          subdivide_task = subdivide_task)
-    chunk.exportTiledModel(path=os.path.join(output_folder, 'tile.zip'), format=Metashape.TiledModelFormat.TiledModelFormatZIP)
-    logging.info(f" Export tiled model.")
-    #doc.save(version="build_tiled")
+from src.tasks.dag_configuration import set_configuration_env
+from src.tasks.new_project import new_project
+from src.tasks.import_photos import import_photos
+from src.tasks.match_align_photos import match_and_align
+from src.tasks.build_depth_maps import build_depth_maps
+from src.tasks.build_point_cloud import build_point_cloud
+from src.tasks.build_model import build_model
+from src.tasks.build_tiled import build_tiled
 
 
-
-# Definizione degli argomenti di default
+# Default
 default_args = {
     'owner': 'Visivo',
-    'depends_on_past': False, # Il task di oggi partirà solo se quello di ieri è stato completato con successo.
+    'depends_on_past': False, # Today's task will only start if yesterday's task has been completed successfully.
     'start_date': datetime(2025, 3, 21),
     'retries': 1,
 }
 
 dag = DAG(
-    dag_id='dag_photogrammetry_depth_map_dagrun_v7',
+    dag_id='dag_photogrammetry_depth_map_dagrun_v9',
     default_args=default_args,
-    schedule_interval=None,  # Avvio manuale per ora
-    catchup=False, # by default è su True, eseguirà lo script  in base alla schedule interval da quel giorno a oggi (mensilmente/giornalmente ecc)
-    # Airflow ignorerà le date mancanti ed eseguirà solo la prossima esecuzione pianificata
+    schedule_interval=None,  # Manual start
+    catchup=False, # By default, it is set to True, and it will execute the script based on the schedule interval from that day to today (monthly/daily, etc.)
+    # Airflow will ignore missing dates and will only execute the next scheduled run
     tags= ['dagrun', 'depth map', 'no save']
 )
 
 #install_task = install_dependencies_task(dag)
 
-# Definizione dei task
+# Task definition
 task_data_initialise = PythonOperator(
     task_id="data_initialise",
-    python_callable=import_dag_configuration,
+    python_callable=set_configuration_env,
     provide_context=True
 )
 
@@ -377,5 +97,4 @@ task_build_tiled = PythonOperator(
 
 # install_task >> 
 
-# Definizione delle dipendenze
 task_data_initialise >> task_new_project >> task_import_photos >> task_match_and_align >> task_build_depth_maps >> [task_build_point_cloud, task_build_tiled, task_build_model]
