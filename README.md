@@ -167,14 +167,16 @@ AirflowDemo/
 │   └── ...
 ├── metashape-module/ # Metashape python module for linux
 │   └── Metashape-2.2.0...whl
-├── src/ (TODO)
-│   ├── import_photos.py
-│   ├── align_cameras.py
-│   ├── build_point_cloud.py
-│   ├── build_mesh.py
-│   ├── build_texture.py
-│   ├── export_results.py
-│   └── metashape_utils.py
+├── src/
+│   └── tasks/
+│   │   ├── dag_configuration.py
+│   │   ├── new_project.py
+│   │   ├── import_photos.py
+│   │   ├── match_align_photos.py
+│   │   ├── build_depth_maps.py
+│   │   ├── build_point_cloud.py
+│   │   ├── build_model.py
+│   │   └── build_tiled.py
 └── dagrun.cfg  # define settings and parameters for DAGs input
 ```
 ### Run the Airflow DAG
@@ -190,7 +192,7 @@ AirflowDemo/
 The images demonstrate in different color the distinct dependencies and management of tasks for machine learning, photogrammetry, data import, and data export
 
 <center><img src="img/ML_Photo_from_point_cloud.png" width="600" align="center"></center>
+DAG based on point cloud
 
-<center><img src="img/from_point_cloud.png" width="600" align="center"></center>
-
-<center><img src="img/from_depth_maps.png" width="600" align="center"></center>
+<center><img src="img/ML_Photo_from_depth_map.png" width="600" align="center"></center>
+DAG based on depth map
