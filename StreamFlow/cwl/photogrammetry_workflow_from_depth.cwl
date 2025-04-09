@@ -24,6 +24,13 @@ steps:
       input_status: new_project/status
     out: [status]
 
+  match_and_align:
+    run: match_and_align.cwl
+    in:
+      previous_output: init_config/output_json
+      input_status: import_photos/status
+    out: [status]
+
 
 outputs:
   init_result:
