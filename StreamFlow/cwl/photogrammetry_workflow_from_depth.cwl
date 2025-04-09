@@ -30,6 +30,13 @@ steps:
       previous_output: init_config/output_json
       input_status: import_photos/status
     out: [status]
+  
+  build_depth_maps:
+    run: build_depth_maps.cwl
+    in:
+      previous_output: init_config/output_json
+      input_status: match_and_align/status
+    out: [status]
 
 
 outputs:

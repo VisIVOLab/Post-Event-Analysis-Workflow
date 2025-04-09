@@ -14,8 +14,8 @@ def match_and_align():
         init_out = json.load(f)
 
     project_path = init_out.get('project_path')
-    #Metashape.app.cpu_enable = ti.xcom_pull(task_ids='data_initialise', key='cpu_enable')
-    #Metashape.app.gpu_mask = ti.xcom_pull(task_ids='data_initialise', key='gpu_mask')
+    #Metashape.app.cpu_enable = init_out.get('cpu_enable')
+    #Metashape.app.gpu_mask = init_out.get('gpu_mask')
 
     config_path = sys.argv[1]
     with open(config_path) as f:
