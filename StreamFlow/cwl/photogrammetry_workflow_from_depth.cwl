@@ -52,6 +52,13 @@ steps:
       input_status: build_depth_maps/status
     out: []
 
+  build_model:
+    run: build_model.cwl
+    in:
+      previous_output: init_config/output_json
+      input_status: build_depth_maps/status
+    out: []
+
 
 outputs:
   init_result:
