@@ -17,6 +17,12 @@ steps:
       previous_output: init_config/output_json
     out: []
 
+  import_photos:
+    run: import_photos.cwl
+    in:
+      previous_output: init_config/output_json
+    out: []
+
 
 outputs:
   init_result:
