@@ -10,7 +10,7 @@ def match_and_align():
     Image matching and alignment
     """
 
-    with open(sys.argv[1], 'r') as f:
+    with open(sys.argv[2], 'r') as f:
         init_out = json.load(f)
 
     project_path = init_out.get('project_path')
@@ -18,7 +18,7 @@ def match_and_align():
     #Metashape.app.gpu_mask = init_out.get('gpu_mask')
 
     config_path = sys.argv[1]
-    with open(config_path) as f:
+    with open(config_path, 'r') as f:
         cfg = json.load(f)
 
     task_config = cfg.get("matchPhotos", {})

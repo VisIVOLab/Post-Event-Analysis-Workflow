@@ -7,6 +7,10 @@ inputs:
         type: File
         inputBinding:
             position: 1
+    config:
+      type: File
+      inputBinding:
+        position: 1
     input_status:
         type: File
 outputs: []

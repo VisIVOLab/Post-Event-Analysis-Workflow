@@ -13,7 +13,7 @@ def build_tiled():
     from config.data_source import data_sources
 
     """Build Tiled model process"""
-    with open(sys.argv[1], 'r') as f:
+    with open(sys.argv[2], 'r') as f:
         init_out = json.load(f)
 
     project_path = init_out.get('project_path')

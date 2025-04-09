@@ -4,9 +4,10 @@ import sys
 #import Metashape
 
 def main():
-    config_path = sys.argv[1]
+    params_path = sys.argv[1]
+    print("init: ", params_path)
     
-    with open(config_path) as f:
+    with open(params_path) as f:
         cfg = json.load(f)
 
     task_config = cfg.get("settings", {})

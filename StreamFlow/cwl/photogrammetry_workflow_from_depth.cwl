@@ -28,6 +28,7 @@ steps:
     run: match_and_align.cwl
     in:
       previous_output: init_config/output_json
+      config: config_file
       input_status: import_photos/status
     out: [status]
   
@@ -35,6 +36,7 @@ steps:
     run: build_depth_maps.cwl
     in:
       previous_output: init_config/output_json
+      config: config_file
       input_status: match_and_align/status
     out: [status]
 
@@ -42,6 +44,7 @@ steps:
     run: build_point_cloud.cwl
     in:
       previous_output: init_config/output_json
+      config: config_file
       input_status: build_depth_maps/status
     out: []
 
@@ -49,6 +52,7 @@ steps:
     run: build_tiled.cwl
     in:
       previous_output: init_config/output_json
+      config: config_file
       input_status: build_depth_maps/status
     out: []
 
@@ -56,6 +60,7 @@ steps:
     run: build_model.cwl
     in:
       previous_output: init_config/output_json
+      config: config_file
       input_status: build_depth_maps/status
     out: []
 

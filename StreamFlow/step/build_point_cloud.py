@@ -13,7 +13,7 @@ def build_point_cloud():
     from config.data_source import data_sources
 
     """Build Point Cloud process"""
-    with open(sys.argv[1], 'r') as f:
+    with open(sys.argv[2], 'r') as f:
         init_out = json.load(f)
 
     project_path = init_out.get('project_path')
@@ -24,6 +24,7 @@ def build_point_cloud():
     config_path = sys.argv[1]
     with open(config_path) as f:
         cfg = json.load(f)
+    
 
     task_config = cfg.get("buildPointCloud", {})
     source_data_str = task_config.get('source_data', "Metashape.DataSource.DepthMapsData")
