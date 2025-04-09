@@ -15,13 +15,14 @@ steps:
     run: new_project.cwl
     in:
       previous_output: init_config/output_json
-    out: []
+    out: [status]
 
   import_photos:
     run: import_photos.cwl
     in:
       previous_output: init_config/output_json
-    out: []
+      input_status: new_project/status
+    out: [status]
 
 
 outputs:

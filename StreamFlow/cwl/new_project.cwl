@@ -7,4 +7,9 @@ inputs:
     type: File
     inputBinding:
       position: 1
-outputs: []
+outputs:
+  status:
+    type: File
+    outputBinding:
+      glob: "new.done"
+

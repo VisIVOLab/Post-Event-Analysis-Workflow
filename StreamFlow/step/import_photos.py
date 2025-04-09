@@ -35,5 +35,9 @@ def import_photos():
     logging.info(f"{len(chunk.cameras)} images loaded.")
     logging.info(f"{disabled_photos} images disabled.") """
 
+    with open("import_photos.done", "w") as f:
+        f.write("import photos done")
+    sys.exit(0)
+
 if __name__ == "__main__":
     import_photos()

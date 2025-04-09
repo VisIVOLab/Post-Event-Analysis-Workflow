@@ -3,8 +3,15 @@ class: CommandLineTool
 baseCommand: ["python3", "/home/leonardo/AirflowDemo/StreamFlow/step/import_photos.py"]
 
 inputs:
-  previous_output:
+    previous_output:
+        type: File
+        inputBinding:
+            position: 1
+    input_status:
+        type: File
+outputs:
+  status:
     type: File
-    inputBinding:
-      position: 1
-outputs: []
+    outputBinding:
+      glob: "import_photos.done"
+
