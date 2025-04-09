@@ -44,9 +44,6 @@ def build_point_cloud():
                           subdivide_task = subdivide_task) """
 
     #chunk.exportPointCloud(os.path.join(output_folder, 'point_cloud.las'))
-    print(f"Build point cloud.")
-    with open("build_point_cloud.done", "w") as f:
-        f.write("Build point cloud.")
     sys.exit(0)
 
 if __name__ == "__main__":

@@ -43,7 +43,14 @@ steps:
     in:
       previous_output: init_config/output_json
       input_status: build_depth_maps/status
-    out: [status]
+    out: []
+
+  build_tiled:
+    run: build_tiled.cwl
+    in:
+      previous_output: init_config/output_json
+      input_status: build_depth_maps/status
+    out: []
 
 
 outputs:
