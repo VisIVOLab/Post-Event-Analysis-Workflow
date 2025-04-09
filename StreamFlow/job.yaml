@@ -1,0 +1,3 @@
+config_file:
+  class: File
+  path: inputs/params.json
