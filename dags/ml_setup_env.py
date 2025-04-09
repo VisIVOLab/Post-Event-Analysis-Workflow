@@ -16,14 +16,15 @@ dag_folder = os.path.dirname(os.path.abspath(__file__))
 project_root_folder = Path(dag_folder).parent
 sys.path.append(str(project_root_folder))
 
-github_token = Variable.get("ml_token")
+
 
 default_args = {
     'owner': 'mauro',
-    'data_folder': project_root_folder / 'data',
     'repo_folder': project_root_folder / 'ml' ,
-    'repo_url': f"https://{github_token}@github.com/ICSC-Spoke3/HaMMon-ML-digital-twin.git"
+    'repo_url': f"https://github.com/ICSC-Spoke3/HaMMon-ML-digital-twin.git"
 }
+
+data_folder = project_root_folder / 'data'
 
 dag = DAG(
     dag_id='ml_env_setup',
