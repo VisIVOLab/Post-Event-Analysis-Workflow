@@ -38,6 +38,13 @@ steps:
       input_status: match_and_align/status
     out: [status]
 
+  build_point_cloud:
+    run: build_point_cloud.cwl
+    in:
+      previous_output: init_config/output_json
+      input_status: build_depth_maps/status
+    out: [status]
+
 
 outputs:
   init_result:
