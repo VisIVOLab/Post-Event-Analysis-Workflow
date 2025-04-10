@@ -1,0 +1,25 @@
+owner: mauro
+
+project_root_folder: /home/mauro/projects/AirflowDemo
+repo_url: https://github.com/ICSC-Spoke3/HaMMon-ML-digital-twin.git
+img_folder: /home/mauro/projects/AirflowDemo/data/floodnet/img-4000-subset
+
+# Path relativi alla root del progetto
+data_folder: data
+ml_folder: ml
+repo_name: HaMMon-ML-digital-twin
+
+resize_folder: data/workflow/resized
+ml_output_folder: data/workflow/ml-output
+ml_output_upscaled_folder: data/workflow/ml-output-upscaled
+ml_output_binary_folder: data/workflow/ml-output-binary
+
+
+resize_size: 713
+upscale_size: 4000
+max_label: 12
+
+labels:
+  - [ "2", "roads" ]
+  - [ "3", "vehicles" ]
+  - [ "4", "buildings" ]

@@ -29,7 +29,9 @@ default_args = {
     'repo_folder': project_root_folder / 'ml/repo',
     'repo_url': "https://github.com/ICSC-Spoke3/HaMMon-ML-digital-twin.git",
     'max_label':12,
-    "downscale_size": 713
+    "downscale_size": 713,                                                       # DAGRUN
+    "input_folder": "/home/mauro/projects/AirflowDemo/data/test-input-small",   # DAGRUN
+    "output_folder": "/home/mauro/projects/AirflowDemo/data/ml-output"         # DAGRUN
 }
 
 labels = [
@@ -52,7 +54,7 @@ labels = [
 #   "downscale_size"
 
 dag = DAG(
-    dag_id='ml',
+    dag_id='ml_default_args',
     default_args=default_args,
     schedule_interval=None, # Manual start
     tags = ['ml']
@@ -94,12 +96,12 @@ install_requirements = BashOperator(
 resize_images = BashOperator(
     task_id='resize_images',
     bash_command=f"""
-        TMP_DIR={{{{ dag_run.conf['output_folder'] }}}}/tmp_{{{{ dag_run.run_id }}}}
+        TMP_DIR={default_args['output_folder']}/tmp_{{{{ dag_run.run_id }}}}
         RESIZED_DIR=$TMP_DIR/resized_inputs
         mkdir -p $RESIZED_DIR
 
         python {default_args['repo_folder']}/utils/preprocess_resize.py \
-            {{{{ dag_run.conf['input_folder'] }}}} \
+            {default_args['input_folder']} \
             $RESIZED_DIR \
             {default_args['downscale_size']}
     """,
@@ -107,33 +109,33 @@ resize_images = BashOperator(
     dag=dag
 )
 
-batch_inference = BashOperator(
-    task_id='batch_inference',
-    bash_command=f"""
-        TMP_DIR={{{{ dag_run.conf['output_folder'] }}}}/tmp_{{{{ dag_run.run_id }}}}
-
-        python {default_args['repo_folder']}/utils/batch_inference.py \
-            $TMP_DIR/resized_inputs \
-            $TMP_DIR/ml_outputs \
-    """,
-    dag=dag
-)
-
-# # DUMMY BATCH INFERENCE
 # batch_inference = BashOperator(
 #     task_id='batch_inference',
 #     bash_command=f"""
-#         TMP_DIR={{{{ dag_run.conf['output_folder'] }}}}/tmp_{{{{ dag_run.run_id }}}}
-#         mkdir -p $TMP_DIR/ml_outputs
-#         cp -r {default_args['data_folder']}/ml-dummy-output/* $TMP_DIR/ml_outputs/
+#         TMP_DIR={default_args['output_folder']}/tmp_{{{{ dag_run.run_id }}}}
+
+#         python {default_args['repo_folder']}/utils/batch_inference.py \
+#             $TMP_DIR/resized_inputs \
+#             $TMP_DIR/ml_outputs \
 #     """,
 #     dag=dag
 # )
 
+# DUMMY BATCH INFERENCE
+batch_inference = BashOperator(
+    task_id='batch_inference',
+    bash_command=f"""
+        TMP_DIR={default_args['output_folder']}/tmp_{{{{ dag_run.run_id }}}}
+        mkdir -p $TMP_DIR/ml_outputs
+        cp -r {default_args['data_folder']}/ml-dummy-output/* $TMP_DIR/ml_outputs/
+    """,
+    dag=dag
+)
+
 upscale_masks = BashOperator(
     task_id='upscale_masks',
     bash_command=f"""
-        TMP_DIR={{{{ dag_run.conf['output_folder'] }}}}/tmp_{{{{ dag_run.run_id }}}}
+        TMP_DIR={default_args['output_folder']}/tmp_{{{{ dag_run.run_id }}}}
         UPSCALE_SIZE="{{{{ ti.xcom_pull(task_ids='resize_images') }}}}"
 
         python {default_args['repo_folder']}/utils/masks_resize.py \
@@ -148,7 +150,7 @@ upscale_masks = BashOperator(
 validate_masks = BashOperator(
     task_id='validate_masks',
     bash_command=f"""
-        TMP_DIR={{{{ dag_run.conf['output_folder'] }}}}/tmp_{{{{ dag_run.run_id }}}}
+        TMP_DIR={default_args['output_folder']}/tmp_{{{{ dag_run.run_id }}}}
 
         python {default_args['repo_folder']}/utils/masks_validate.py \
             $TMP_DIR/ml_outputs_upscaled \
@@ -161,7 +163,7 @@ prepare_binary_dir = BashOperator(
     task_id="prepare_binary_dir",
     bash_command=f"""
         RUN_ID="{{{{ dag_run.run_id }}}}"
-        OUTPUT_FOLDER={{{{ dag_run.conf['output_folder'] }}}}
+        OUTPUT_FOLDER={default_args['output_folder']}
         BINARY_DIR="$OUTPUT_FOLDER/binary"
         FINAL_DIR="$BINARY_DIR"
 
@@ -183,8 +185,8 @@ with dag:
                 task_id=f"binary_mask_{i}",
                 bash_command=f"""
                     RUN_ID="{{{{ dag_run.run_id }}}}"
-                    TMP_DIR={{{{ dag_run.conf['output_folder'] }}}}/tmp_$RUN_ID
-                    OUTPUT_FOLDER={{{{ dag_run.conf['output_folder'] }}}}
+                    TMP_DIR={default_args['output_folder']}/tmp_$RUN_ID
+                    OUTPUT_FOLDER={default_args['output_folder']}
                     BINARY_DIR="$OUTPUT_FOLDER/binary"
                     BINARY_RUN_ID="$OUTPUT_FOLDER/binary_$RUN_ID"
 
@@ -205,11 +207,10 @@ with dag:
                 dag=dag
             )
 
-
 cleanup = BashOperator(
     task_id='clean_up',
     bash_command=f"""
-        TMP_DIR={{{{ dag_run.conf['output_folder'] }}}}/tmp_{{{{ dag_run.run_id }}}}
+        TMP_DIR={default_args['output_folder']}/tmp_{{{{ dag_run.run_id }}}}
         
         if [[ "$TMP_DIR" == *"/tmp_"* ]]; then
             echo "Cleaning up $TMP_DIR"

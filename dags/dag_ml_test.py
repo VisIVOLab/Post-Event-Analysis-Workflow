@@ -25,14 +25,14 @@ default_args = {
     'owner': 'mauro',
     'data_folder': project_root_folder / 'data',
     'img_folder': project_root_folder / 'data/floodnet/img-4000-subset',
-    'resize_folder': project_root_folder / 'data/resized',
+    'resize_folder': project_root_folder / 'data/tmp_resize',
     'resize_size': 713,
     'ml_output_folder': project_root_folder / 'data/floodnet/ml-dummy-output',
     'ml_output_upscaled_folder': project_root_folder / 'data/floodnet/ml-dummy-output',
     'ml_output_binary_folder': project_root_folder / 'data/floodnet/ml-dummy-output-binary',
     'upscale_size': 4000,
     'ml_folder': project_root_folder / 'ml',
-    'max_label':12,
+    'max_label':11,
     'repo_url': "https://github.com/ICSC-Spoke3/HaMMon-ML-digital-twin.git",
     'repo_folder': project_root_folder / 'ml/HaMMon-ML-digital-twin'
 }
@@ -47,7 +47,7 @@ labels = [
 
 
 dag = DAG(
-    dag_id='ml_inference',
+    dag_id='ml-test',
     default_args=default_args,
     schedule_interval=None,  # Avvio manuale per ora
     catchup=False, # Airflow ignorerà le date mancanti ed eseguirà solo la prossima esecuzione pianificata
@@ -86,17 +86,17 @@ setup_ml_repo = BashOperator(
 #     dag=dag
 # )
 
-# check and resize input images
-resize_images = BashOperator(
-    task_id='resize_images',
-    bash_command=f"""
-        python {default_args['repo_folder']}/utils/preprocess_resize.py \
-            {default_args['img_folder']} \
-            {default_args['resize_folder']} \
-            {default_args['resize_size']}
-    """,
-    dag=dag
-)
+# # check and resize input images
+# resize_images = BashOperator(
+#     task_id='resize_images',
+#     bash_command=f"""
+#         python {default_args['repo_folder']}/utils/preprocess_resize.py \
+#             {default_args['img_folder']} \
+#             {default_args['resize_folder']} \
+#             {default_args['resize_size']}
+#     """,
+#     dag=dag
+# )
 
 # upscale_masks = BashOperator(
 #     task_id='resize_masks',
@@ -143,30 +143,21 @@ resize_images = BashOperator(
 #     dag=dag
 # )
 
-# with dag:
-#     with TaskGroup("binary_masks_group", tooltip="Esegui masks_binary N volte") as binary_masks_group:
-#         for i, (param1, param2) in enumerate(labels):
-#             task = BashOperator(
-#                 task_id=f"binary_mask_{i}",
-#                 bash_command=f"""
-#                     python {default_args['repo_folder']}/utils/masks_binary.py \
-#                         {default_args['ml_output_upscaled_folder']} \
-#                         {param1} \
-#                         {default_args['ml_output_binary_folder']}/{param2}
-#                 """,
-#                 dag=dag
-#             )
+with dag:
+    with TaskGroup("binary_masks_group", tooltip="Esegui masks_binary N volte") as binary_masks_group:
+        for i, (param1, param2) in enumerate(labels):
+            task = BashOperator(
+                task_id=f"binary_mask_{i}",
+                bash_command=f"""
+                    python {default_args['repo_folder']}/utils/masks_binary.py \
+                        {default_args['ml_output_upscaled_folder']} \
+                        {param1} \
+                        {default_args['ml_output_binary_folder']}/{param2}
+                """,
+                dag=dag
+            )
 
 
-batch_inference = BashOperator(
-    task_id='batch_inference',
-    bash_command=f"""
-        python {default_args['repo_folder']}/utils/batch_inference.py \
-            {default_args['resize_folder']} \
-            {default_args['ml_output_folder']} \
-    """,
-    dag=dag
-)
 
 # Task chaining
 # setup_ml_repo >> install_requirements >> resize_images >> batch_inference >> upscale_masks >> validate_masks >> binary_masks
@@ -174,8 +165,7 @@ batch_inference = BashOperator(
 # setup_ml_repo >> install_requirements >> upscale_masks
 
 
-setup_ml_repo >> resize_images >> batch_inference
-
+setup_ml_repo >> binary_masks_group
 
 
 

@@ -1,0 +1,17 @@
+# version: v1.0
+# workflows:
+#   setup_repo_task:
+#     type: cwl
+#     config:
+#       file: install_requirements.cwl
+#       #file: setup_ml_repo.cwl
+#       settings: workflow-cfg.yaml
+#streamflow run streamflow.yml
+version: v1.0
+
+workflows:
+  full_pipeline:
+    type: cwl
+    config:
+      file: workflow.cwl
+      settings: workflow-cfg.yaml
