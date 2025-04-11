@@ -10,7 +10,7 @@ import os
 import sys
 from pathlib import Path
 
-
+# airflow dags trigger ml --conf "$(cat dagrun-ml.cfg)"
 
 
 dag_folder = os.path.dirname(os.path.abspath(__file__))
@@ -21,6 +21,7 @@ sys.path.append(str(project_root_folder))
 # Default
 default_args = {
     'owner': 'Visivo',
+    'project_root_folder': project_root_folder,
     'data_folder': project_root_folder / 'data',
     'ml_folder': project_root_folder / 'ml',
     'repo_folder': project_root_folder / 'ml/repo',
@@ -172,7 +173,8 @@ prepare_binary_dir = BashOperator(
 )
 
 with dag: 
-    with TaskGroup("binary_masks_group", tooltip="Esegui masks_binary N volte") as binary_masks_group:
+    with TaskGroup("binary_masks_group", tooltip="extract binary masks") as binary_masks_group:
+        binary_mask_tasks = []
         for i, (num, label) in enumerate(labels):
             task = BashOperator(
                 task_id=f"binary_mask_{i}",
@@ -199,7 +201,10 @@ with dag:
                 """,
                 dag=dag
             )
-
+            binary_mask_tasks.append(task)
+            
+for t1, t2 in zip(binary_mask_tasks[:-1], binary_mask_tasks[1:]):
+    t1 >> t2
 
 cleanup = BashOperator(
     task_id='clean_up',
@@ -218,6 +223,25 @@ cleanup = BashOperator(
 )
 
 
+rename_files = BashOperator(
+    task_id="rename_files",
+    bash_command=f"""
+        # Set the output folder from dag_run configuration.
+        OUTPUT_FOLDER={{{{ dag_run.conf['output_folder'] }}}}
+        BINARY_DIR="$OUTPUT_FOLDER/binary"
+        
+        # If a run-specific binary folder exists, use it.
+        if [ -d "$OUTPUT_FOLDER/binary_{{{{ dag_run.run_id }}}}" ]; then
+            BINARY_DIR="$OUTPUT_FOLDER/binary_{{{{ dag_run.run_id }}}}"
+        fi
+
+        echo "Using BINARY_DIR: $BINARY_DIR"
+        bash {default_args['project_root_folder']}/src/scripts/rename_binary_masks.sh "$BINARY_DIR"
+    """,
+    dag=dag
+)
+
+
 
 # Task chaining
 
@@ -230,6 +254,7 @@ cleanup = BashOperator(
     >> validate_masks
     >> prepare_binary_dir
     >> binary_masks_group
+    >> rename_files
     >> cleanup
 )
 
