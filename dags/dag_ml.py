@@ -30,17 +30,31 @@ default_args = {
     "downscale_size": 713
 }
 
+# labels = [
+#     ("0", "background"),
+# #    ("1", "building-flooded"),
+#     ("2", "building-not-flooded"),
+# #    ("3", "road-flooded"),
+#     ("4", "road-not-flooded"),
+#     ("5", "water"),
+#     ("6", "tree"),
+#     ("7", "vehicle"),
+# #    ("8", "pool"),
+#     ("9", "grass"),
+# ]
+
 labels = [
     ("0", "background"),
-#    ("1", "building-flooded"),
-    ("2", "building-not-flooded"),
-#    ("3", "road-flooded"),
-    ("4", "road-not-flooded"),
-    ("5", "water"),
-    ("6", "tree"),
-    ("7", "vehicle"),
-#    ("8", "pool"),
-    ("9", "grass"),
+    ("1", "water"),
+    ("2", "building_no_damage"),
+    ("3", "building_minor_damage"),
+    ("4", "building_major_damage"),
+    ("5", "building_total_destruction"),
+    ("6", "vehicle"),
+    ("7", "road-clear"),
+    ("8", "road-blocked"),
+    ("9", "tree"),
+    ("10", "pool"),
 ]
 
 # into the dagrun.cfg
@@ -202,7 +216,7 @@ with dag:
                 dag=dag
             )
             binary_mask_tasks.append(task)
-            
+
 for t1, t2 in zip(binary_mask_tasks[:-1], binary_mask_tasks[1:]):
     t1 >> t2
 
