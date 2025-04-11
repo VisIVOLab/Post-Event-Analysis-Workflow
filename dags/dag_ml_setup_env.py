@@ -1,15 +1,16 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+from airflow.operators.python import ExternalPythonOperator
 from airflow.operators.bash import BashOperator
 from airflow.models import Variable
+from airflow.utils.task_group import TaskGroup
 
 
-from datetime import datetime
-import json
-import time
 import os
 import sys
 from pathlib import Path
+
+
 
 
 dag_folder = os.path.dirname(os.path.abspath(__file__))
@@ -17,57 +18,71 @@ project_root_folder = Path(dag_folder).parent
 sys.path.append(str(project_root_folder))
 
 
-
+# Default
 default_args = {
-    'owner': 'mauro',
-    'repo_folder': project_root_folder / 'ml' ,
-    'repo_url': f"https://github.com/ICSC-Spoke3/HaMMon-ML-digital-twin.git"
+    'owner': 'Visivo',
+    'data_folder': project_root_folder / 'data',
+    'ml_folder': project_root_folder / 'ml',
+    'repo_folder': project_root_folder / 'ml/repo',
+    'repo_url': "https://github.com/ICSC-Spoke3/HaMMon-ML-digital-twin.git",
+    'max_label':12,
+    "downscale_size": 713
 }
 
-data_folder = project_root_folder / 'data'
+labels = [
+    ("0", "background"),
+#    ("1", "building-flooded"),
+    ("2", "building-not-flooded"),
+#    ("3", "road-flooded"),
+    ("4", "road-not-flooded"),
+    ("5", "water"),
+    ("6", "tree"),
+    ("7", "vehicle"),
+#    ("8", "pool"),
+    ("9", "grass"),
+]
+
+# into the dagrun.cfg
+#   "input_folder":  
+#   "output_folder"  
 
 dag = DAG(
-    dag_id='ml_env_setup',
+    dag_id='ml_setup_env',
     default_args=default_args,
-    schedule_interval=None,  # Avvio manuale per ora
-    catchup=False, # Airflow ignorerà le date mancanti ed eseguirà solo la prossima esecuzione pianificata
-    tags = ['mauro', 'ml']
+    schedule_interval=None, # Manual start
+    tags = ['ml']
 )
 
 
-# Task 1: Clone or update the ML repository
+# Clone or update the ML repository
 setup_ml_repo = BashOperator(
     task_id='setup_ml_repo',
     bash_command=f"""
-        REPO_BASE_DIR="{default_args['repo_folder']}"
-        REPO_NAME="HaMMon-ML-digital-twin"
+        ML_DIR="{default_args['ml_folder']}"
+        REPO_DIR="{default_args['repo_folder']}"
         REPO_URL="{default_args['repo_url']}"
-        TARGET_DIR="$REPO_BASE_DIR/$REPO_NAME"
 
-        mkdir -p "$REPO_BASE_DIR"
+        mkdir -p "$ML_DIR"
 
-        if [ -d "$TARGET_DIR/.git" ]; then
+        if [ -d "$REPO_DIR/.git" ]; then
             echo "Repo already exists. Pulling latest changes..."
-            cd "$TARGET_DIR"
+            cd "$REPO_DIR"
             git pull
         else
             echo "Cloning repo for the first time..."
-            git clone --depth 1 "$REPO_URL" "$TARGET_DIR"
+            git clone --depth 1 "$REPO_URL" "$REPO_DIR"
         fi
     """,
     dag=dag
 )
 
-# Task 2: Install the requirements from the ML repository
+# Install the requirements from the ML repository
 install_requirements = BashOperator(
     task_id='install_ml_requirements',
     bash_command=f"""
-        pip install -r {default_args['repo_folder']}/HaMMon-ML-digital-twin/requirements.txt
+        pip install -r {default_args['repo_folder']}/requirements.txt
     """,
     dag=dag
 )
 
-
-# Task chaining
 setup_ml_repo >> install_requirements
-
