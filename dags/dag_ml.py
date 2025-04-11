@@ -6,9 +6,6 @@ from airflow.models import Variable
 from airflow.utils.task_group import TaskGroup
 
 
-from datetime import datetime
-import json
-import time
 import os
 import sys
 from pathlib import Path
@@ -45,11 +42,9 @@ labels = [
     ("9", "grass"),
 ]
 
-
 # into the dagrun.cfg
 #   "input_folder":  
 #   "output_folder"  
-#   "downscale_size"
 
 dag = DAG(
     dag_id='ml',

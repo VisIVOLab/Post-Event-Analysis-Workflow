@@ -1,48 +1,37 @@
-cwlVersion: v1.2
+mlcwlVersion: v1.2
 class: CommandLineTool
 label: "Clone or update ML repository"
-baseCommand: [bash, -c]
-
-requirements:
-  InlineJavascriptRequirement: {}
+baseCommand: [bash, "-c"]
 
 inputs:
-  project_root_folder:
-    type: string
   ml_folder:
-    type: string  
-  repo_name:
     type: string
+    inputBinding:
+      position: 1
+  repo_folder:
+    type: string
+    inputBinding:
+      position: 2
   repo_url:
     type: string
+    inputBinding:
+      position: 3
 
 arguments:
-  - valueFrom: |
-        MOTHER_DIR="$(inputs.project_root_folder)/$(inputs.ml_folder)"
-        REPO_URL="$(inputs.repo_url)"
-        TARGET_DIR="$MOTHER_DIR/$(inputs.repo_name)"
+  - |
+    ML_DIR="$1"
+    REPO_DIR="$2"
+    REPO_URL="$3"
 
-        mkdir -p $MOTHER_DIR
+    mkdir -p "$ML_DIR"
 
-        if [ -d "$TARGET_DIR/.git" ]; then
-            echo "Repo already exists. Pulling latest changes..."
-            cd "$TARGET_DIR"
-            git pull
-        else
-            echo "Cloning repo for the first time..."
-            git clone --depth 1 "$REPO_URL" "$TARGET_DIR"
-        fi
-    position: 1
+    if [ -d "$REPO_DIR/.git" ]; then
+        echo "Repo already exists. Pulling latest changes..."
+        cd "$REPO_DIR"
+        git pull
+    else
+        echo "Cloning repo for the first time..."
+        git clone --depth 1 "$REPO_URL" "$REPO_DIR"
+    fi
 
-# stdout: logs/setup_ml_repo.log
-# stderr: logs/setup_ml_repo.err
-
-outputs:
-  setup_log:
-    type: File
-    outputBinding:
-      glob: logs/setup_ml_repo.log
-  setup_err:
-    type: File
-    outputBinding:
-      glob: logs/setup_ml_repo.err
+outputs: []

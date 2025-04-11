@@ -1,0 +1,19 @@
+owner: Visivo
+
+data_folder: data
+ml_folder: ml
+repo_folder: ml/repo
+
+repo_url: "https://github.com/ICSC-Spoke3/HaMMon-ML-digital-twin.git"
+max_label: 12
+downscale_size: 713
+labels:
+  - [ "2", "buildings" ]
+  - [ "4", "roads" ]
+  - [ "5", "water" ]
+  - [ "6", "trees" ]
+  - [ "7", "vehicles" ]
+  - [ "9", "grass" ]
+
+
+
