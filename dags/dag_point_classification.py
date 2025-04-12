@@ -8,10 +8,15 @@ dag_folder = os.path.dirname(os.path.abspath(__file__))
 project_root_folder = Path(dag_folder).parent
 sys.path.append(str(project_root_folder))
 
-# Imposta la cartella di output per salvare il progetto
+"""
 OUTPUT_FOLDER = "/home/leonardo/AirflowDemo/metashape_output"
 PROJECT_PATH = "/home/leonardo/AirflowDemo/progetto_ottignana/progetto_ottignana.psx"
 MASK_PATH = "/home/leonardo/AirflowDemo/maschere"
+"""
+# Imposta la cartella di output per salvare il progetto
+OUTPUT_FOLDER = "."
+PROJECT_PATH = "."
+MASK_PATH = "."
 
 def import_mask(masks_directory: str):
     import Metashape
