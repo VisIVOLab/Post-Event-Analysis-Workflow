@@ -176,7 +176,7 @@ prepare_binary_dir = BashOperator(
         FINAL_DIR="$BINARY_DIR"
 
         if [ -d "$BINARY_DIR" ]; then
-            echo "Directory 'binary' già esistente. Ne creo una nuova con run_id."
+            echo "BINARY_DIR already exists. Creating a new folder with run_id."
             FINAL_DIR="${{BINARY_DIR}}_${{RUN_ID}}"
             mkdir -p "$FINAL_DIR"
         else
