@@ -151,7 +151,8 @@ with DAG(
 ) as dag:
     
     # Cartella di base
-    base_folder = "/home/leonardo/AirflowDemo/maschere"
+    #base_folder = "/home/leonardo/AirflowDemo/maschere"
+    base_folder = "."
     
     # Crea dinamicamente i task
     create_dynamic_tasks(dag, base_folder)
