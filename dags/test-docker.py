@@ -28,12 +28,11 @@ sys.path.append(str(project_root_folder))
 
 
 class DynamicMountDockerOperator(DockerOperator):
-    # Rendi 'source_path' un campo templabile
     template_fields = DockerOperator.template_fields + ("input_path","output_path",)
 
     def __init__(
         self,
-        input_path: str,  # path assoluto da dag_run.conf
+        input_path: str,  
         output_path: str,
         **kwargs,
     ):
@@ -42,7 +41,6 @@ class DynamicMountDockerOperator(DockerOperator):
         self.output_path = output_path
 
     def execute(self, context):
-        # Ora self.source_path è già stato espanso da Jinja
         self.mounts = [
             Mount(source=self.input_path, target='/ml/input', type="bind", read_only=True),
             Mount(source=self.output_path, target='/ml/output', type="bind", read_only=False),
@@ -152,11 +150,6 @@ resize_images = DynamicMountDockerOperator(
     input_path="{{dag_run.conf['input_folder']}}",
     output_path="{{dag_run.conf['output_folder']}}",
     user=f"{os.getuid()}",
-
-    # mounts=[
-    #     Mount(source="{{dag_run.conf['input_folder']}}", target="/ml/input", type="bind", read_only=True),
-    #     Mount(source="{{dag_run.conf['output_folder']}}", target="/ml/output", type="bind"),
-    # ],
     dag=dag,
 )
 
