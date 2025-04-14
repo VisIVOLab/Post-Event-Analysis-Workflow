@@ -1,4 +1,4 @@
-# AirflowDemo
+# Post-Event-Analysis-Workflow
 The repository contains a series of tests and demos using **Apache Airflow**, an open-source platform used to programmatically author, schedule, and monitor workflows. It is primarily used for managing complex data pipelines or workflows in the data engineering and data science fields.
 
 The project includes an python automated workflow for photogrammetry and machine learning processing, managing tasks with **Agisoft Metashape** for images and 3D model processing, and machine learning ...
@@ -152,7 +152,7 @@ airflow db migrate
 ## Project Structure
 
 ```
-AirflowDemo/
+Post-Event-Analysis-Workflow/
 ├── dags/
 │   ├── dag_photogrammetry_from_depth_map.py            # photogrammetry workflow based on depth map (input params)
 │   ├── dag_photogrammetry_from_point_cloud.py          # photogrammetry workflow based on point cloud (input params)
@@ -196,3 +196,16 @@ DAG based on point cloud
 
 <center><img src="img/ML_Photo_from_depth_map.png" width="600" align="center"></center>
 DAG based on depth map
+
+
+cwltool cwl/photogrammetry_workflow_from_depth.cwl job.yaml 
+
+# # airflow dags trigger ml --conf "$(cat dagrun-ml.cfg)"
+
+Docker : scaricare l'immagine di mauro dockerfile.processing
+# # docker build -t pil.processing -f Dockerfile.processing .
+settare nell'ambiente di Airflow con
+'''pip install apache-airflow-providers-docker'''
+'''pip install docker'''
+
+# airflow dags trigger test-docker --conf "$(cat dagrun-ml.cfg)"
