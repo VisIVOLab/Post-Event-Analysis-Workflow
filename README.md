@@ -196,16 +196,3 @@ DAG based on point cloud
 
 <center><img src="img/ML_Photo_from_depth_map.png" width="600" align="center"></center>
 DAG based on depth map
-
-
-cwltool cwl/photogrammetry_workflow_from_depth.cwl job.yaml 
-
-# # airflow dags trigger ml --conf "$(cat dagrun-ml.cfg)"
-
-Docker : scaricare l'immagine di mauro dockerfile.processing
-# # docker build -t pil.processing -f Dockerfile.processing .
-settare nell'ambiente di Airflow con
-'''pip install apache-airflow-providers-docker'''
-'''pip install docker'''
-
-# airflow dags trigger test-docker --conf "$(cat dagrun-ml.cfg)"
