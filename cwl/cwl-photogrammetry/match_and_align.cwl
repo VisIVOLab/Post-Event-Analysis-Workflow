@@ -1,6 +1,6 @@
-cwlVersion: v1.0
+cwlVersion: v1.2
 class: CommandLineTool
-baseCommand: ["python3", "/home/leonardo/AirflowDemo/StreamFlow/step/build_point_cloud.py"]
+baseCommand: ["python3", "/home/leonardo/AirflowDemo/cwl/step/match_align_photos.py"]
 
 inputs:
     previous_output:
@@ -13,4 +13,8 @@ inputs:
         position: 1
     input_status:
         type: File
-outputs: []
+outputs:
+  status:
+    type: File
+    outputBinding:
+      glob: "match_and_align.done"

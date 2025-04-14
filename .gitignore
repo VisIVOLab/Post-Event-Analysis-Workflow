@@ -177,3 +177,11 @@ cython_debug/
 /data
 /ml 
 **/.streamflow/
+
+/maschere
+/metashape_input
+/metashape_output
+/logs
+/progetto_ottignana
+/progetto_ottignana - Copia
+/airflow-3.10.16-env

@@ -1,6 +1,6 @@
 cwlVersion: v1.2
 class: CommandLineTool
-baseCommand: ["python3", "/home/leonardo/AirflowDemo/StreamFlow/step/import_photos.py"]
+baseCommand: ["python3", "/home/leonardo/AirflowDemo/cwl/step/import_photos.py"]
 
 inputs:
   previous_output:

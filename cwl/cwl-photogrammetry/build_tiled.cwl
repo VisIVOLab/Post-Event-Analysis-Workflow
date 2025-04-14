@@ -1,6 +1,6 @@
 cwlVersion: v1.2
 class: CommandLineTool
-baseCommand: ["python3", "/home/leonardo/AirflowDemo/StreamFlow/step/build_tiled.py"]
+baseCommand: ["python3", "/home/leonardo/AirflowDemo/cwl/step/build_tiled.py"]
 
 inputs:
     previous_output:
