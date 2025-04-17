@@ -103,4 +103,10 @@ task_docker_point = PhotogrammetryDinamicDocker(
     dag=dag
 )  
 
-task_docker_init >> task_docker_new >> task_docker_import_photos >> task_docker_match >> task_docker_depth >> task_docker_point
+task_docker_model = PhotogrammetryDinamicDocker(
+    task_id="3D_model",
+    command= "python step_photogrammetry/build_model.py",
+    dag=dag
+)
+
+task_docker_init >> task_docker_new >> task_docker_import_photos >> task_docker_match >> task_docker_depth >>  task_docker_model
