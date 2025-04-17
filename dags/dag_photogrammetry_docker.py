@@ -89,7 +89,18 @@ task_docker_match = PhotogrammetryDinamicDocker(
     task_id="match_align",
     command= "python step_photogrammetry/match_align_photos.py ",
     dag=dag
-) 
+)
 
+task_docker_depth = PhotogrammetryDinamicDocker(
+    task_id="depth_map",
+    command= "python step_photogrammetry/build_depth_maps.py ",
+    dag=dag
+)
 
-task_docker_init >> task_docker_new >> task_docker_import_photos >> task_docker_match
+task_docker_point = PhotogrammetryDinamicDocker(
+    task_id="point_cloud",
+    command= "python step_photogrammetry/build_point_cloud.py ",
+    dag=dag
+)  
+
+task_docker_init >> task_docker_new >> task_docker_import_photos >> task_docker_match >> task_docker_depth >> task_docker_point
