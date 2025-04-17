@@ -5,12 +5,17 @@ from datetime import datetime
 from airflow.models import TaskInstance
 from airflow.exceptions import AirflowException
 from pathlib import Path
+from dotenv import load_dotenv
+from docker.types import DeviceRequest
+from airflow.operators.bash import BashOperator
+
+load_dotenv()
+metashapelicense = os.getenv("AGISOFT_FLS")
 
 dag_folder = os.path.dirname(os.path.abspath(__file__))
 project_root_folder = Path(dag_folder).parent
 sys.path.append(str(project_root_folder))
 
-from src.tasks.dag_configuration import set_configuration_env
 from src.dynamic_mount_docker_operator import DynamicMountDockerOperator
 
 class PhotogrammetryDinamicDocker (DynamicMountDockerOperator):
@@ -22,30 +27,38 @@ class PhotogrammetryDinamicDocker (DynamicMountDockerOperator):
             container_name=container_name,
             command=command,
             api_version='auto',
-            auto_remove="force",
+            auto_remove='force',
             docker_url='unix://var/run/docker.sock',
-            network_mode='bridge',
+            network_mode='host',
             mount_tmp_dir=False,
-            input_path="{{dag_run.conf.settings['image_path']}}",
+            input_path="{{ dag_run.conf.get('settings', {}).get('image_path') }}",
             target_input_path="/photogrammetry/images",
-            output_path="{{dag_run.conf.settings['project_path']}}",
+            output_path="{{ dag_run.conf.get('settings', {}).get('project_path') }}",
             target_output_path="/photogrammetry/project",
-            src_path=f"{project_root_folder}/src",
-            target_src_path="/photogrammetry/src",
-            user=f"{os.getuid()}",
+            working_dir="/home/photogrammetry/src",
+            src_path=f"{project_root_folder}/docker",
+            target_src_path="/home/photogrammetry/src",
+            do_xcom_push=False,
+            #user=f"{os.getuid()}",
+            environment={
+                'AGISOFT_FLS':metashapelicense
+            },
+            device_requests=[
+                DeviceRequest(count=-1, capabilities=[['gpu']])
+            ],
             **kwargs
         )
 
 # Default
 default_args = {
     'owner': 'Visivo',
-    'depends_on_past': False, # Today's task will only start if yesterday's task has been completed successfully.
+    'depends_on_past': False,
     'start_date': datetime(2025, 3, 21),
-    'retries': 1,
+    'retries': 0
 }
 
 dag = DAG(
-    dag_id='dag_photogrammetry_depth_map_docker_v1',
+    dag_id='dag_photogrammetry_depth_map_docker',
     default_args=default_args,
     schedule_interval=None,  # Manual start
     catchup=False, # By default, it is set to True, and it will execute the script based on the schedule interval from that day to today (monthly/daily, etc.)
@@ -53,26 +66,30 @@ dag = DAG(
     tags= ['dagrun', 'depth map', 'docker']
 )
 
-#install_task = install_dependencies_task(dag)
-
 # Task definition
-task_docker_one = PhotogrammetryDinamicDocker(
-    task_id="data_initialise_1",
-    command= """echo test""",
-    dag=dag
-)
-
-task_docker_two = PhotogrammetryDinamicDocker(
-    task_id="data_initialise_2",
-    command= """echo test 2""",
-    dag=dag
-)
-
-""" task_data_initialise = PythonOperator(
+task_docker_init = PhotogrammetryDinamicDocker(
     task_id="data_initialise",
-    python_callable=set_configuration_env,
-    provide_context=True
-) 
-"""
+    command= "python step_photogrammetry/init_config.py ",
+    dag=dag
+)
 
-task_docker_one >> task_docker_two
+task_docker_new = PhotogrammetryDinamicDocker(
+    task_id="new_project",
+    command= "python step_photogrammetry/new_project.py ",
+    dag=dag
+)
+
+task_docker_import_photos = PhotogrammetryDinamicDocker(
+    task_id="import_photos",
+    command= "python step_photogrammetry/import_photos.py ",
+    dag=dag
+)
+
+task_docker_match = PhotogrammetryDinamicDocker(
+    task_id="match_align",
+    command= "python step_photogrammetry/match_align_photos.py ",
+    dag=dag
+) 
+
+
+task_docker_init >> task_docker_new >> task_docker_import_photos >> task_docker_match
