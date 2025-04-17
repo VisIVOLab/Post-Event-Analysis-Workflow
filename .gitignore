@@ -185,3 +185,4 @@ cython_debug/
 /progetto_ottignana
 /progetto_ottignana - Copia
 /airflow-3.10.16-env
+.airflow.cfg
