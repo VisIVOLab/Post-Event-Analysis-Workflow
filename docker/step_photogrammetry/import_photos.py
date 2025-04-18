@@ -35,8 +35,8 @@ def import_photos():
             disabled_photos += 1
 
     doc.save(version="import_photos")
-    logging.info(f"{len(chunk.cameras)} images loaded.")
-    logging.info(f"{disabled_photos} images disabled.")
+    print(f"{len(chunk.cameras)} images loaded.")
+    print(f"{disabled_photos} images disabled.")
     Metashape.app.quit()
     sys.exit(0)
 
