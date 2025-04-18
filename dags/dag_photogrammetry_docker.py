@@ -33,7 +33,7 @@ class PhotogrammetryDinamicDocker (DynamicMountDockerOperator):
             mount_tmp_dir=False,
             input_path="{{ dag_run.conf.get('settings', {}).get('image_path') }}",
             target_input_path="/photogrammetry/images",
-            output_path="{{ dag_run.conf.get('settings', {}).get('project_path') }}",
+            output_path="{{ dag_run.conf.get('settings', {}).get('project_path') ~ '_' ~ ts_nodash }}",
             target_output_path="/photogrammetry/project",
             working_dir="/home/photogrammetry/src",
             src_path=f"{project_root_folder}/docker",
@@ -99,14 +99,23 @@ task_docker_depth = PhotogrammetryDinamicDocker(
 
 task_docker_point = PhotogrammetryDinamicDocker(
     task_id="point_cloud",
+    container_name='metashape-slim-container_{{ ti.task_id }}',
     command= "python step_photogrammetry/build_point_cloud.py ",
     dag=dag
 )  
 
 task_docker_model = PhotogrammetryDinamicDocker(
     task_id="3D_model",
+    container_name='metashape-slim-container_{{ ti.task_id }}',
     command= "python step_photogrammetry/build_model.py",
     dag=dag
 )
 
-task_docker_init >> task_docker_new >> task_docker_import_photos >> task_docker_match >> task_docker_depth >>  task_docker_model
+task_docker_tiled = PhotogrammetryDinamicDocker(
+    task_id="tiled_model",
+    container_name='metashape-slim-container_{{ ti.task_id }}',
+    command= "python step_photogrammetry/build_tiled.py",
+    dag=dag
+)
+
+task_docker_init >> task_docker_new >> task_docker_import_photos >> task_docker_match >> task_docker_depth >>  [task_docker_model, task_docker_point, task_docker_tiled]
