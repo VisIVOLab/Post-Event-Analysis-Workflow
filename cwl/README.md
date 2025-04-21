@@ -1,13 +1,11 @@
-- fix path relative to cwl-photogrammetry-step
-cambiare il path absolute path in relative path
-
-
 # CWL Photogrammetry Pipeline
 
 ## Overview
 This part of the project uses the Common Workflow Language (CWL) to orchestrate the photogrammetry pipeline, executing each task locally in a reproducible environment. To handle task progression and manage dependencies between steps, the current implementation uses the generation of dummy files as intermediate signals.
 
 | ⚠️ Note: This is work in progress.
+
+It's recommended to convert the relative paths of cwl scripts into absolute paths
 
 ## Requirements
 - cwltool
