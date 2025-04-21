@@ -75,7 +75,7 @@ docker-dagrun.cfg                       # input photogrammetric path project
 ```
 
 ## Run the Docker DAG
-1. Set di [`params.json`](inputs_photogrammetry/params.json) and [`docker-dagrun.cfg`](../docker-dagrun.cfg)
+1. Set [`params.json`](inputs_photogrammetry/params.json) and [`docker-dagrun.cfg`](../docker-dagrun.cfg)
 
 2. Run DAG 
     ```bash
