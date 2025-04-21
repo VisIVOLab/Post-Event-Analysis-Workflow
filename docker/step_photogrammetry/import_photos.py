@@ -2,7 +2,6 @@ import json
 import os
 import sys
 import Metashape
-import logging
 
 def import_photos():
 

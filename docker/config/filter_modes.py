@@ -1,6 +1,5 @@
 import Metashape
 
-# Dizionario che mappa le chiavi alle costanti Metashape
 filter_modes = {
     "Metashape.FilterMode.MildFiltering": Metashape.FilterMode.MildFiltering,
     "Metashape.MildFiltering": Metashape.FilterMode.MildFiltering,
