@@ -1,4 +1,3 @@
-
 from airflow.models import TaskInstance
 from airflow.exceptions import AirflowException
 import os
