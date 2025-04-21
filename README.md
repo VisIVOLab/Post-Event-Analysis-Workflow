@@ -56,7 +56,7 @@ export AIRFLOW_HOME=~/airflow
 However, you can set it all directly within the same project, allowing you to have different configurations for each individual project.
 
 ```bash
-export AIRFLOW_HOME="$(pwd)" # from procjet folder
+export AIRFLOW_HOME="$(pwd)" # from project folder
 ```
 To avoid doing it every time the program runs. You can set it on `.bashrc`
 ```bash
