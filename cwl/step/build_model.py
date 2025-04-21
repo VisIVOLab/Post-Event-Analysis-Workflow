@@ -8,7 +8,7 @@ project_root_folder = Path(dag_folder).parent
 sys.path.append(str(project_root_folder))
 
 def build_model():
-    #import Metashape
+    import Metashape
     import logging
     from config.surface_type import surface_types
     from config.interpolation import interpolations
@@ -28,13 +28,13 @@ def build_model():
 
     task_config = cfg.get("buildModel", {})
     surface_type_str = task_config.get('surface_type', "Metashape.SurfaceType.Arbitrary")
-    #surface_type = surface_types.get(surface_type_str, Metashape.SurfaceType.Arbitrary)
+    surface_type = surface_types.get(surface_type_str, Metashape.SurfaceType.Arbitrary)
     interpolation_str = task_config.get('interpolation', "Metashape.Interpolation.EnabledInterpolation")
-    #interpolation = interpolations.get(interpolation_str, Metashape.Interpolation.EnabledInterpolation)
+    interpolation = interpolations.get(interpolation_str, Metashape.Interpolation.EnabledInterpolation)
     face_count_str = task_config.get('face_count', "Metashape.FaceCount.MediumFaceCount")
-    #face_count = face_counts.get(face_count_str, Metashape.FaceCount.MediumFaceCount)
+    face_count = face_counts.get(face_count_str, Metashape.FaceCount.MediumFaceCount)
     source_data_str = task_config.get('source_data', "Metashape.DataSource.DepthMapsData")
-    #source_data = data_sources.get(source_data_str, Metashape.DataSource.DepthMapsData)
+    source_data = data_sources.get(source_data_str, Metashape.DataSource.DepthMapsData)
     vertex_colors = task_config.get('vertex_colors', True)
     vertex_confidence = task_config.get('vertex_confidence', True)
     keep_depth = task_config.get('keep_depth', True)
@@ -43,13 +43,13 @@ def build_model():
     build_texture = task_config.get('build_texture', True)
     subdivide_task = task_config.get('subdivide_task', True)
 
-    #doc = Metashape.Document()
-    #doc.open(path=project_path, read_only=False)
-    #chunk = doc.chunks[0]
-    #Metashape.app.cpu_enable = init_out.get('cpu_enable')
-    #Metashape.app.gpu_mask = init_out.get('gpu_mask')
+    doc = Metashape.Document()
+    doc.open(path=project_path, read_only=False)
+    chunk = doc.chunks[0]
+    Metashape.app.cpu_enable = init_out.get('cpu_enable')
+    Metashape.app.gpu_mask = init_out.get('gpu_mask')
 
-    """ chunk.buildModel(surface_type=surface_type, 
+    chunk.buildModel(surface_type=surface_type, 
                      interpolation=interpolation, 
                      face_count=face_count, 
                      source_data=source_data,
@@ -59,11 +59,11 @@ def build_model():
                      split_in_blocks = split_in_blocks,
                      blocks_size = blocks_size,
                      build_texture= build_texture,
-                     subdivide_task = subdivide_task) """
-    #chunk.buildUV(mapping_mode= Metashape.MappingMode.GenericMapping, page_count=1, texture_size=8192)
-    #chunk.buildTexture(blending_mode= Metashape.BlendingMode.MosaicBlending, texture_size= 8192, fill_holes= True, ghosting_filter= True)
-    #chunk.exportModel(os.path.join(output_folder, 'model.obj'))
-    #chunk.exportTexture(path=os.path.join(output_folder, 'texture.jpg'), texture_type= Metashape.Model.TextureType.DiffuseMap, save_alpha= False,  raster_transform= Metashape.RasterTransformType.RasterTransformNone)
+                     subdivide_task = subdivide_task)
+    chunk.buildUV(mapping_mode= Metashape.MappingMode.GenericMapping, page_count=1, texture_size=8192)
+    chunk.buildTexture(blending_mode= Metashape.BlendingMode.MosaicBlending, texture_size= 8192, fill_holes= True, ghosting_filter= True)
+    chunk.exportModel(os.path.join(output_folder, 'model.obj'))
+    chunk.exportTexture(path=os.path.join(output_folder, 'texture.jpg'), texture_type= Metashape.Model.TextureType.DiffuseMap, save_alpha= False,  raster_transform= Metashape.RasterTransformType.RasterTransformNone)
     logging.info(f"Export 3D model.")
     sys.exit(0)
 

@@ -1,7 +1,6 @@
 import json
-import os
 import sys
-#import Metashape
+import Metashape
 
 def new_project():
     """
@@ -11,15 +10,15 @@ def new_project():
         init_out = json.load(f)
 
     # Check compatibility
-    """ compatible_major_version = "2.2"
+    compatible_major_version = "2.2"
     found_major_version = ".".join(Metashape.app.version.split('.')[:2])
     if found_major_version != compatible_major_version:
-        raise Exception("Incompatible Metashape version: {} != {}".format(found_major_version, compatible_major_version)) """
+        raise Exception("Incompatible Metashape version: {} != {}".format(found_major_version, compatible_major_version))
     
     project_path = init_out.get('project_path')
 
-    #doc = Metashape.Document()
-    #doc.save(path=project_path, version="new project")
+    doc = Metashape.Document()
+    doc.save(path=project_path, version="new project")
 
     with open("new.done", "w") as f:
         f.write("new project done")

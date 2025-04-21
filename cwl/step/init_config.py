@@ -1,7 +1,7 @@
 import json
 import os
 import sys
-#import Metashape
+import Metashape
 
 def main():
     params_path = sys.argv[1]
@@ -19,17 +19,17 @@ def main():
         raise ValueError("Error: no image_path folder selected!")
 
     # GPU info
-    #gpus = Metashape.app.enumGPUDevices()
-    #num_gpus = len(gpus)
-    #gpu_mask = 2**num_gpus - 1 if num_gpus > 0 else 0
+    gpus = Metashape.app.enumGPUDevices()
+    num_gpus = len(gpus)
+    gpu_mask = 2**num_gpus - 1 if num_gpus > 0 else 0
 
     # Write outputs
     with open("init_out.json", "w") as f:
         json.dump({
             "project_path": project_path,
-            "image_path": image_path
-            #"num_gpus": num_gpus,
-            #"gpu_mask": gpu_mask
+            "image_path": image_path,
+            "num_gpus": num_gpus,
+            "gpu_mask": gpu_mask
         }, f)
 
 if __name__ == "__main__":
