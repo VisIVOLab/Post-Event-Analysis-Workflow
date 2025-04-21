@@ -10,11 +10,9 @@ The workflow in this repository is designed to:
 
 1. Acquire image sets from a predefined source.
 
-2. Use Metashape to perform photogrammetry processing (e.g., image alignment, point cloud generation, mesh creation, ~~orthophoto generation,~~ etc.).
+2. Use Metashape to perform photogrammetry processing (e.g., image alignment, point cloud generation, mesh creation, etc.).
 
-3. ~~Monitor task execution and handle any errors using Apache Airflow's scheduling system.~~
-
-4. ML ...
+3. ML ...
 
 # Requirements
 
@@ -191,8 +189,14 @@ Post-Event-Analysis-Workflow/
 
 The images demonstrate in different color the distinct dependencies and management of tasks for machine learning, photogrammetry, data import, and data export
 
-<center><img src="img/ML_Photo_from_point_cloud.png" width="600" align="center"></center>
-DAG based on point cloud
+<p align="center">
+  <img src="img/ML_Photo_from_point_cloud.png" width="600"/>
+  <br>
+  <em>Figure 1: DAG based on point cloud.</em>
+</p>
 
-<center><img src="img/ML_Photo_from_depth_map.png" width="600" align="center"></center>
-DAG based on depth map
+<p align="center">
+  <img src="img/ML_Photo_from_depth_map.png" width="600"/>
+  <br>
+  <em>Figure 2: DAG based on depth map.</em>
+</p>
