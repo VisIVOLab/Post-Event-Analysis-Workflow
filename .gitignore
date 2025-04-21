@@ -178,6 +178,7 @@ cython_debug/
 /ml 
 **/.streamflow/
 
+docker/init_set.json
 /maschere
 /metashape_input
 /metashape_output
@@ -191,3 +192,4 @@ LICENSE
 airflow.db
 airflow-webserver.pid
 webserver_config.py
+cwl/init_out.json
