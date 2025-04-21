@@ -1,6 +1,6 @@
 cwlVersion: v1.2
 class: CommandLineTool
-baseCommand: ["python3", "/home/leonardo/AirflowDemo/cwl/step/new_project.py"]
+baseCommand: ["python3", "./cwl/step/new_project.py"]
 
 inputs:
   previous_output:
@@ -13,3 +13,4 @@ outputs:
     outputBinding:
       glob: "new.done"
 
+doc: Define new Metashape project.

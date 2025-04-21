@@ -1,6 +1,6 @@
 cwlVersion: v1.2
 class: CommandLineTool
-baseCommand: ["python3", "/home/leonardo/AirflowDemo/cwl/step/init_config.py"]
+baseCommand: ["python3", "./cwl/step/init_config.py"]
 
 inputs:
   config:

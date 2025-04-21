@@ -1,6 +1,6 @@
 cwlVersion: v1.2
 class: CommandLineTool
-baseCommand: ["python3", "/home/leonardo/AirflowDemo/cwl/step/import_photos.py"]
+baseCommand: ["python3", "./cwl/step/import_photos.py"]
 
 inputs:
   previous_output:
@@ -15,3 +15,4 @@ outputs:
     outputBinding:
       glob: "import_photos.done"
 
+doc: Set cameras on first Metashape chunk.

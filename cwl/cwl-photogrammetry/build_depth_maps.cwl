@@ -1,6 +1,6 @@
 cwlVersion: v1.2
 class: CommandLineTool
-baseCommand: ["python3", "/home/leonardo/AirflowDemo/cwl/step/build_depth_maps.py"]
+baseCommand: ["python3", "./cwl/step/build_depth_maps.py"]
 
 inputs:
     previous_output:
@@ -18,3 +18,5 @@ outputs:
     type: File
     outputBinding:
       glob: "build_depth_maps.done"
+
+doc: Build depth maps.

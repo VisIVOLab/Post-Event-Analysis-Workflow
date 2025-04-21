@@ -1,6 +1,6 @@
 cwlVersion: v1.0
 class: CommandLineTool
-baseCommand: ["python3", "/home/leonardo/AirflowDemo/cwl/step/build_point_cloud.py"]
+baseCommand: ["python3", "./cwl/step/build_point_cloud.py"]
 
 inputs:
     previous_output:
@@ -14,3 +14,5 @@ inputs:
     input_status:
         type: File
 outputs: []
+
+doc: Build point cloud.
