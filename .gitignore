@@ -193,3 +193,5 @@ airflow.db
 airflow-webserver.pid
 webserver_config.py
 cwl/init_out.json
+
+note.txt
