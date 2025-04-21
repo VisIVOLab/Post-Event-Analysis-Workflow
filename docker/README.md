@@ -7,6 +7,11 @@ To orchestrate the photogrammetry pipeline, this part of the project utilizes th
 - airflow apache
 - docker-compose
 - docker container with the required Metashape dependencies pre-installed
+- Python package:
+```bash
+pip install apache-airflow-providers-docker
+pip install docker
+```
 
 ## Project Structure
 ```
