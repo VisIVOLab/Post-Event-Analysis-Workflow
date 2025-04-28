@@ -59,7 +59,7 @@ cwl/
 }
 ```
 
-## Run the Docker DAG
+## Run the CWL
 1. Set [`params.json`](inputs/params.json)
 
 2. Run CWL 
